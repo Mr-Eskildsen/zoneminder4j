@@ -1,0 +1,11 @@
+package name.eskildsen.zoneminder;
+
+import java.io.IOException;
+
+import name.eskildsen.zoneminder.trigger.ZoneMinderEventSubscriber;
+
+public interface IZoneMinderEventSession_NA {
+	//void SubscribeMonitorEvents(String monitorId, ZoneMinderTriggerSubscriber subscriber); 
+	boolean writeTelnet(String writeString) throws IOException;
+	String pollTelnet() throws IOException;
+}
