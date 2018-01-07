@@ -11,6 +11,7 @@ import name.eskildsen.zoneminder.IZoneMinderEventManager;
 import name.eskildsen.zoneminder.IZoneMinderEventSubscriber;
 import name.eskildsen.zoneminder.api.config.ZoneMinderConfig;
 import name.eskildsen.zoneminder.api.config.ZoneMinderConfigEnum;
+import name.eskildsen.zoneminder.api.exception.ZoneMinderApiNotEnabledException;
 import name.eskildsen.zoneminder.api.telnet.ZoneMinderTriggerEvent;
 import name.eskildsen.zoneminder.exception.ZoneMinderUrlNotFoundException;
 import name.eskildsen.zoneminder.trigger.ZoneMinderEventNotifier;
@@ -80,12 +81,12 @@ public class ZoneMinderEventManager extends ZoneMinderEventNotifier  implements 
 	}
 
 	   
-	   
-	   protected boolean verifyTelnetConnection(ZoneMinderConnectionInfo connection) {
+		//TODO Create specific telnet session, because API Exception shouldn't be relevant
+	   protected boolean verifyTelnetConnection(ZoneMinderConnectionInfo connection)  {
 			try {
 				ZoneMinderSession session = new ZoneMinderSession(connection, false, true);
 				   return session.isConnectedTelnet();
-			} catch (FailedLoginException | IllegalArgumentException | IOException | ZoneMinderUrlNotFoundException e) {
+			} catch (FailedLoginException | IllegalArgumentException | IOException | ZoneMinderUrlNotFoundException | ZoneMinderApiNotEnabledException e) {
 				return false;
 			}
 
@@ -97,12 +98,13 @@ public class ZoneMinderEventManager extends ZoneMinderEventNotifier  implements 
 		   try {
 			   ZoneMinderSession session = new ZoneMinderSession(connection, true, false);
 			   return session.isConnectedHttp();
-			} catch (FailedLoginException | IllegalArgumentException | IOException | ZoneMinderUrlNotFoundException e) {
+			} catch (FailedLoginException | IllegalArgumentException | IOException | ZoneMinderUrlNotFoundException | ZoneMinderApiNotEnabledException e) {
 				return false;
 			}
 
 	   }
 	   
+	
    
 	   public void setConnected(boolean newState) {
 		   if (connection==null) {
@@ -170,7 +172,11 @@ public class ZoneMinderEventManager extends ZoneMinderEventNotifier  implements 
 	    	}
 	    	
 	    	private void connect() throws FailedLoginException, IllegalArgumentException, IOException, ZoneMinderUrlNotFoundException {
-	    		sessionTelnet = new ZoneMinderSession(connection, false, true );
+	    		try {
+	    			sessionTelnet = new ZoneMinderSession(connection, false, true );
+	    		} catch (ZoneMinderApiNotEnabledException e) {
+	    			
+	    		}
 	    	}
 	    	
 	    	protected synchronized boolean allowRun() {
@@ -233,7 +239,7 @@ public class ZoneMinderEventManager extends ZoneMinderEventNotifier  implements 
 
 
 		@Override
-		public boolean validateLogin(IZoneMinderConnectionInfo connection) throws IllegalArgumentException, IOException, ZoneMinderUrlNotFoundException {
+		public boolean validateLogin(IZoneMinderConnectionInfo connection) throws IllegalArgumentException, IOException, ZoneMinderUrlNotFoundException, ZoneMinderApiNotEnabledException {
 			   try {
 				   ZoneMinderSession session = new ZoneMinderSession(connection, true, false);
 				   return session.isConnectedHttp();
@@ -252,19 +258,31 @@ public class ZoneMinderEventManager extends ZoneMinderEventNotifier  implements 
 					ZoneMinderServerProxy server = new ZoneMinderServerProxy(session);
 					return server.isApiEnabled();
 
-				} catch (NullPointerException e) {
+				} catch (NullPointerException | ZoneMinderApiNotEnabledException e) {
 					return false;
 				}
 		}
 
 		@Override
-		public boolean isTriggerOptionEnabled(IZoneMinderConnectionInfo connection) throws FailedLoginException, IllegalArgumentException, IOException, ZoneMinderUrlNotFoundException {
+		public boolean isTriggerOptionEnabled(IZoneMinderConnectionInfo connection) throws FailedLoginException, IllegalArgumentException, IOException, ZoneMinderUrlNotFoundException, ZoneMinderApiNotEnabledException {
 			   try {
 				   ZoneMinderSession session = null;
 					session = new ZoneMinderSession(connection, true, false);
 					ZoneMinderServerProxy server = new ZoneMinderServerProxy(session);
 					return server.isTriggerOptionEnabled();
 				} catch (NullPointerException e) {
+					return false;
+				}
+		}
+
+
+		@Override
+		public boolean isZoneMinderUrl(IZoneMinderConnectionInfo connection) throws IllegalArgumentException, ZoneMinderApiNotEnabledException {
+			   try {
+				   	ZoneMinderSession session = null;
+				   	session = new ZoneMinderSession(connection, true, false, false);
+					return session.isZoneMinderSite();
+				} catch (NullPointerException |FailedLoginException | IOException | ZoneMinderUrlNotFoundException e) {
 					return false;
 				}
 		}

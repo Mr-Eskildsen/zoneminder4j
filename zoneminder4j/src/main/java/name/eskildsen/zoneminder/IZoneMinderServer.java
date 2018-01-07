@@ -25,49 +25,49 @@ import name.eskildsen.zoneminder.internal.ZoneMinderServerConstants;
 import name.eskildsen.zoneminder.internal.ZoneMinderSession;
 
 public interface IZoneMinderServer extends IZoneMinderResponse {
-	
 
-	 
 
-	 /* ******************************************************
-	  * 
-	  * Status calls
-  	 * 
+
+
+	/* ******************************************************
+	 * 
+	 * Status calls
+	 * 
 	 ***************************************************** */
-	 boolean isConnected();
-	 boolean isApiEnabled();
-	 boolean isTriggerOptionEnabled();
+	boolean isConnected();
+	boolean isApiEnabled();
+	boolean isTriggerOptionEnabled();
 
-	 /* ******************************************************
-	  * 
-	  * Host API
-  	 * 
+	/* ******************************************************
+	 * 
+	 * Host API
+	 * 
 	 ***************************************************** */
 	IZoneMinderHostVersion getHostVersion() throws FailedLoginException, ZoneMinderUrlNotFoundException, IOException; 
 	IZoneMinderHostLoad getHostCpuLoad() throws FailedLoginException, ZoneMinderUrlNotFoundException, IOException; 
 
 	IZoneMinderDaemonStatus getHostDaemonCheckState();
 	IZoneMinderDiskUsage getHostDiskUsage() throws FailedLoginException, ZoneMinderUrlNotFoundException, IOException;
-	
 
-   /** *****************************************************
-    * 
-    * Monitor API
-    * 
-     ***************************************************** */
-   
-	ArrayList<IZoneMinderMonitorData> getMonitors();
-   
-	
+
 	/** *****************************************************
-    * 
-    * Config API
-    * 
-     ***************************************************** */    
+	 * 
+	 * Monitor API
+	 * 
+	 ***************************************************** */
+
+	ArrayList<IZoneMinderMonitorData> getMonitors();
+
+
+	/** *****************************************************
+	 * 
+	 * Config API
+	 * 
+	 ***************************************************** */    
 	ZoneMinderConfig getConfig(ZoneMinderConfigEnum configId);
-   	
+
 	boolean setConfig(ZoneMinderConfigEnum configId, Boolean newValue);
-  
+
 	boolean setConfig(ZoneMinderConfigEnum configId, String value);
 
 }

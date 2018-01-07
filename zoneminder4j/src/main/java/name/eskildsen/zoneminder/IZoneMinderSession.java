@@ -4,9 +4,9 @@ import java.net.URI;
 
 import name.eskildsen.zoneminder.internal.HttpRequest;
 
-public interface IZoneMinderSession {
+public interface IZoneMinderSession extends IZoneMinderCoreSession {
 
-	IZoneMinderConnectionInfo getConnectionInfo();
+	boolean isAuthenticated();
 	boolean isConnected();
-	
+
 }

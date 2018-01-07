@@ -10,10 +10,10 @@ public class ZoneMinderMonitorStatus {
 	@SerializedName("status")
 	@Expose
 	private String status;
-	
+
 	public ZoneMinderMonitorStatusEnum getStatus() {
 		return  ZoneMinderMonitorStatusEnum.getEnum(status);
 	}
-	
-	
+
+
 }

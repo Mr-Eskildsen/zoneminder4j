@@ -5,9 +5,9 @@ import javax.annotation.Generated;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-import name.eskildsen.zoneminder.api.ZoneMinderData;
+import name.eskildsen.zoneminder.api.ZoneMinderResponseData;
 
-public class ZoneMinderConfig extends ZoneMinderData {
+public class ZoneMinderConfig extends ZoneMinderResponseData {
 
 
 	@SerializedName("Id")

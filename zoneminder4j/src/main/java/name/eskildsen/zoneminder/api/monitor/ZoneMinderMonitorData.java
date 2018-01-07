@@ -4,11 +4,11 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 import name.eskildsen.zoneminder.IZoneMinderMonitorData;
-import name.eskildsen.zoneminder.api.ZoneMinderData;
+import name.eskildsen.zoneminder.api.ZoneMinderResponseData;
 import name.eskildsen.zoneminder.common.ZoneMinderMonitorFunctionEnum;
 import name.eskildsen.zoneminder.common.ZoneMinderMonitorSourceTypeEnum;
 
-public class ZoneMinderMonitorData extends ZoneMinderData implements IZoneMinderMonitorData {
+public class ZoneMinderMonitorData extends ZoneMinderResponseData implements IZoneMinderMonitorData {
 
 	@SerializedName("Id")
 	@Expose

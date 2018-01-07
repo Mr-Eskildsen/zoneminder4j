@@ -53,6 +53,7 @@ public class ZoneMinderMonitorProxy extends ZoneMinderGenericProxy implements IZ
         return (IZoneMinderDaemonStatus)getMonitorStatus( DAEMON_NAME_FRAME, ZoneMinderMonitorFrameDaemonStatus.class);
     }
 
+    
     private  ZoneMinderDaemonStatus getMonitorStatus(String daemonName, Type classType) {
 
         JsonObject jsonObject = null;
@@ -62,12 +63,8 @@ public class ZoneMinderMonitorProxy extends ZoneMinderGenericProxy implements IZ
             jsonObject = getAsJson(strCommand);
 	    
         } catch (IOException | FailedLoginException | ZoneMinderUrlNotFoundException e) {
-/*
- * TODO:: FIX THIS        	if (getSession()!=null) {
- 
-        		getSession().setConnected(false);
-        	}
-*/	     }
+        	return null;
+        }
 
       //gson.fromJson(jsonObject, classType);
         return (ZoneMinderDaemonStatus) convertToClass(jsonObject, classType);
@@ -80,15 +77,12 @@ public class ZoneMinderMonitorProxy extends ZoneMinderGenericProxy implements IZ
      * Event API
      * 
       ***************************************************** */
-    
-   
     public  IZoneMinderEventData getLastEvent() {
 
         JsonObject jsonObject = null;
         ArrayList<ZoneMinderEvent> list = new ArrayList<ZoneMinderEvent>();
         try {
-
-            
+           
             Integer maxPages = 1;
             for (Integer curPageIdx = 1; curPageIdx <= maxPages; curPageIdx++) {
 
@@ -102,35 +96,27 @@ public class ZoneMinderMonitorProxy extends ZoneMinderGenericProxy implements IZ
 
                 JsonElement elemPageCount = jsonObject.getAsJsonObject("pagination").get("pageCount");
                 
-                //ZoneMinderPagination pagination = gson.fromJson(jsonObject.getAsJsonObject("pagination"), ZoneMinderPagination.class);
-                
                 if (curPageIdx == 1) {
-                    maxPages = elemPageCount.getAsInt(); //pagination.getPageCount();
+                    maxPages = elemPageCount.getAsInt();
                 }
                 
                 JsonArray jsonEvents = jsonObject.getAsJsonArray("events");
                 
                 for (JsonElement curJsonEvent : jsonEvents) {
-
-               	 //list.add(gson.fromJson(((JsonObject)curJsonEvent).getAsJsonObject("Event"), ZoneMinderEvent.class));
-
                 	list.add((ZoneMinderEvent)convertToClass(((JsonObject)curJsonEvent).getAsJsonObject("Event"), ZoneMinderEvent.class));
-       	 
                 }
             }
-	     } catch (IOException | FailedLoginException | ZoneMinderUrlNotFoundException e) {
-/*
- * 	    	 
- //TODO:: FIX THIS
-	        	if (getSessionManager()!=null) {
-	        		getSessionManager().setConnected(false);
-	        	}
-*/	        	
+            if (list.size()>0) {
+            	// Return last event
+            	return (IZoneMinderEventData) list.get(list.size() - 1);
+            }
+            
+    	} catch (ArrayIndexOutOfBoundsException | IOException | FailedLoginException | ZoneMinderUrlNotFoundException e) {
+    	
 	    	 return null;
-	     }
-
-        // Return last event
-        return (IZoneMinderEventData) list.get(list.size() - 1);
+	    }
+        
+        return null;
     }
 
     
@@ -159,22 +145,19 @@ public class ZoneMinderMonitorProxy extends ZoneMinderGenericProxy implements IZ
                 JsonArray jsonEvents = jsonObject.getAsJsonArray("events");
                 
                 for (JsonElement curJsonEvent : jsonEvents) {
-               	 //ZoneMinderEvent curEvent = gson.fromJson(((JsonObject)curJsonEvent).getAsJsonObject("Event"), ZoneMinderEvent.class);
                 	ZoneMinderEvent curEvent = (ZoneMinderEvent) convertToClass(((JsonObject)curJsonEvent).getAsJsonObject("Event"), ZoneMinderEvent.class);
-               	 if (curEvent.getId().equals(eventId))
-               		 return (IZoneMinderEventData)curEvent;
+                	if (curEvent != null) {
+                	
+                        // Return last event
+               	 		if (curEvent.getId().equals(eventId))
+               	 			return (IZoneMinderEventData)curEvent;
+                	}
                 }
             }
-	     } catch (IOException | FailedLoginException | ZoneMinderUrlNotFoundException e) {
-/*
- //TODO:: FIX THIS
-	    	 if (getSessionManager()!=null) {
-	        		getSessionManager().setConnected(false);
-	        	}
-*/
-	    	 }
+	     } catch (ArrayIndexOutOfBoundsException | IOException | FailedLoginException | ZoneMinderUrlNotFoundException e) {
+	    	 return null;
+	     }
 
-        // Return last event
         return null;
     }
 
@@ -250,13 +233,7 @@ public class ZoneMinderMonitorProxy extends ZoneMinderGenericProxy implements IZ
 		    	 jsonObject = getAsJson(resolveCommands(ZoneMinderServerConstants.SUBPATH_API_MONITOR_SPECIFIC_JSON, "MonitorId", getId()))
 		    		 			.getAsJsonObject("monitor").getAsJsonObject("Monitor");
 		     } catch (IOException | FailedLoginException | ZoneMinderUrlNotFoundException e) {
-		    	 
-		    	 /*
-//TODO::FIX THIS
-		        	if (getSessionManager()!=null) {
-		        		getSessionManager().setConnected(false);
-		        	}
-		    	  */
+		    	 jsonObject = null;
 		     }
 		     
 		     if (jsonObject == null) {
@@ -265,8 +242,6 @@ public class ZoneMinderMonitorProxy extends ZoneMinderGenericProxy implements IZ
 		    
 	     	return (IZoneMinderMonitorData)convertToClass(jsonObject, ZoneMinderMonitorData.class);
 	     			
-//	     			gson.fromJson(jsonObject, ZoneMinderMonitorData.class);
-	    
 	     }
 	    
 	     
@@ -280,9 +255,12 @@ public class ZoneMinderMonitorProxy extends ZoneMinderGenericProxy implements IZ
 	             jsonObject = getAsJson(strCommand);
 	             ZoneMinderMonitorStatus status = gson.fromJson(jsonObject, ZoneMinderMonitorStatus.class); 
 	             
-	             return status.getStatus();
+	             if (status != null) {
+	                 return status.getStatus();
+	             }
+	             
              } catch (FailedLoginException | ZoneMinderUrlNotFoundException | IOException e) {
-            	 //INtentionally left blank
+            	 //Intentionally left blank
              }
 	         
 	         return ZoneMinderMonitorStatusEnum.UNKNOWN;

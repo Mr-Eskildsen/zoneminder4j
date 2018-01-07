@@ -8,8 +8,10 @@ import javax.annotation.Generated;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
+import name.eskildsen.zoneminder.IZoneMinderDiskUsage;
 
-public class ZoneMinderDiskUsage extends ZoneMinderData {
+
+public class ZoneMinderDiskUsage extends ZoneMinderResponseData implements IZoneMinderDiskUsage {
 
 	
 	@SerializedName("space")

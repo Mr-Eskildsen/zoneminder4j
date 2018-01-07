@@ -5,9 +5,9 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 import name.eskildsen.zoneminder.IZoneMinderEventData;
-import name.eskildsen.zoneminder.api.ZoneMinderData;
+import name.eskildsen.zoneminder.api.ZoneMinderResponseData;
 
-public class ZoneMinderEvent extends ZoneMinderData implements IZoneMinderEventData {
+public class ZoneMinderEvent extends ZoneMinderResponseData implements IZoneMinderEventData {
 
 	@SerializedName("Id")
 	@Expose

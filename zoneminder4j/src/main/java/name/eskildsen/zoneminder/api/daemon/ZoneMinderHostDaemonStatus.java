@@ -1,7 +1,7 @@
 package name.eskildsen.zoneminder.api.daemon;
 
 import name.eskildsen.zoneminder.IZoneMinderDaemonStatus;
-import name.eskildsen.zoneminder.api.ZoneMinderData;
+import name.eskildsen.zoneminder.api.ZoneMinderResponseData;
 
 public class ZoneMinderHostDaemonStatus extends ZoneMinderDaemonStatus implements IZoneMinderDaemonStatus {
 	private Boolean _daemonState = false;

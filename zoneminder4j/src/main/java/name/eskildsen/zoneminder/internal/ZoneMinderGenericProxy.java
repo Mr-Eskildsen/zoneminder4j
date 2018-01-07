@@ -8,7 +8,9 @@ import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URL;
 import java.util.List;
+import java.util.logging.Logger;
 
 import javax.security.auth.login.FailedLoginException;
 import javax.ws.rs.core.UriBuilder;
@@ -22,7 +24,7 @@ import name.eskildsen.zoneminder.IZoneMinderConnectionInfo;
 import name.eskildsen.zoneminder.IZoneMinderResponse;
 import name.eskildsen.zoneminder.IZoneMinderSession;
 
-import name.eskildsen.zoneminder.api.ZoneMinderData;
+import name.eskildsen.zoneminder.api.ZoneMinderResponseData;
 import name.eskildsen.zoneminder.api.ZoneMinderDiskUsage;
 import name.eskildsen.zoneminder.exception.ZoneMinderUrlNotFoundException;
 import name.eskildsen.zoneminder.trigger.ZoneMinderEventNotifier;
@@ -45,7 +47,8 @@ public class ZoneMinderGenericProxy implements IZoneMinderResponse {
     protected Gson gson = new Gson();
 
 	private String _id = "";
-	
+
+	private String url = "";
 	private int responseCode = 0;
 	private String responseMessage = "";
 	
@@ -77,6 +80,7 @@ public class ZoneMinderGenericProxy implements IZoneMinderResponse {
 
 
 	protected void releaseSession(ZoneMinderSession session) {
+		
 		setHttpResponse(session);
 	}
 
@@ -89,12 +93,12 @@ public class ZoneMinderGenericProxy implements IZoneMinderResponse {
 		return null;
 	}
 
-protected ZoneMinderData convertToClass(JsonObject object, Type classType){
-	ZoneMinderData data = gson.fromJson(object, classType);
+protected ZoneMinderResponseData convertToClass(JsonObject object, Type classType){
+	ZoneMinderResponseData data = gson.fromJson(object, classType);
 	
 	if (data==null) {
 		try {
-			data = (ZoneMinderData)(Class.forName(classType.getTypeName()).newInstance());
+			data = (ZoneMinderResponseData)(Class.forName(classType.getTypeName()).newInstance());
 	
 		} catch (InstantiationException | IllegalAccessException |ClassNotFoundException e) {
 			data = null;
@@ -102,6 +106,7 @@ protected ZoneMinderData convertToClass(JsonObject object, Type classType){
 	}
 	
 	if (data!=null) {
+		data.setHttpUrl(getHttpUrl());
 		data.setHttpResponseCode(getHttpResponseCode());
 		data.setHttpResponseMessage(getHttpResponseMessage());
 	}
@@ -121,8 +126,8 @@ protected ZoneMinderData convertToClass(JsonObject object, Type classType){
     	
 	    // Build Path to the required method in the API
 	    UriBuilder uriBuilder= null;
-			uriBuilder = UriBuilder.fromUri(connectionInfo.getZoneMinderRootUri()).path(ZoneMinderServerConstants.SUBPATH_API)
-			        .path(methodPath);
+	    //connectionInfo.getZoneMinderRootUri()).path(ZoneMinderServerConstants.SUBPATH_API)
+		uriBuilder = UriBuilder.fromUri(connectionInfo.getZoneMinderApiBaseUri()).path(methodPath);
 
 	    if ((queryString != null) && (queryString != "")) {
 	        uriBuilder = uriBuilder.replaceQuery(queryString);
@@ -147,7 +152,12 @@ protected ZoneMinderData convertToClass(JsonObject object, Type classType){
 	     * */
 	    protected String sendPut(String methodPath, String postParams) throws Exception {
 	    	ZoneMinderSession session = aquireSession();
-	    	String result = session._sendRequest(BuildURI(session.getConnectionInfo(), methodPath), HttpRequest.PUT, postParams);
+	    	
+	    	String t = String.format("Call to '%s' with params '%s' failed", methodPath, postParams);
+	    	if (session==null){
+	    		throw new NullPointerException(String.format("Call to '%s' with params '%s' failed", methodPath, postParams));
+	    	}
+	    	String result = session.sendRequest(BuildURI(session.getConnectionInfo(), methodPath), HttpRequest.PUT, postParams);
 	    	setHttpResponse(session);
 	    	releaseSession( session );
 
@@ -162,7 +172,7 @@ protected ZoneMinderData convertToClass(JsonObject object, Type classType){
 	    
 	    protected String sendPost(String methodPath, String postParams) throws Exception {
 	    	ZoneMinderSession session = aquireSession();
-	    	String result = session._sendRequest(BuildURI(session.getConnectionInfo(), methodPath), HttpRequest.POST, postParams);
+	    	String result = session.sendRequest(BuildURI(session.getConnectionInfo(), methodPath), HttpRequest.POST, postParams);
 	    	setHttpResponse(session);
 	    	releaseSession( session );
 
@@ -182,8 +192,12 @@ protected ZoneMinderData convertToClass(JsonObject object, Type classType){
 	    	String result = "";
 	    	try {
 	    		session = aquireSession();
+	    		if (session==null) {
+	    	    	throw new NullPointerException(String.format("Call to '%s' with queryString '%s' failed", methodPath, queryString));
+	    		}
+	    		
 	    		uri = BuildURI(session.getConnectionInfo(), methodPath, queryString);
-	    		result = session._getDocumentAsString(uri, true);
+	    		result = session.getDocumentAsString(uri, true);
 	    		if (result.equals("")) {
 	    			return null;
 	    		}
@@ -208,11 +222,18 @@ protected ZoneMinderData convertToClass(JsonObject object, Type classType){
 	    private String getAsString(String methodPath) throws Exception {
 	    	ZoneMinderSession session = aquireSession();
 	    	try {
-	    		return session._getDocumentAsString(BuildURI(session.getConnectionInfo(), methodPath, null), true);
+	    		if (session==null) {
+	    	    	throw new NullPointerException(String.format("getAsString(): Call to '%s' failed", methodPath));
+	    		}
+
+	    		return session.getDocumentAsString(BuildURI(session.getConnectionInfo(), methodPath, null), true);
 	    	}
+	    	
 	    	finally {
-	    		setHttpResponse(session);
-	    		releaseSession( session );
+	    		if (session !=null){
+	    			setHttpResponse(session);
+	    			releaseSession( session );
+	    		}
 	    	}
 	        
 	    }
@@ -221,13 +242,24 @@ protected ZoneMinderData convertToClass(JsonObject object, Type classType){
 	    	
 	    	ZoneMinderSession session = aquireSession();
 	    	try {
-    			return session._getDocumentAsString(BuildURI(session.getConnectionInfo(), methodPath, queryString), true);
+	    		if (session==null) {
+	    	    	throw new NullPointerException(String.format("getAsString(): Call to '%s' with queryString '%s' failed", methodPath, queryString));
+	    		}
+    			return session.getDocumentAsString(BuildURI(session.getConnectionInfo(), methodPath, queryString), true);
 	    	}
 	    	finally {
-	    		setHttpResponse(session);
-	    		releaseSession( session );
+	    		if (session !=null){
+	    			setHttpResponse(session);
+	    			releaseSession( session );
+	    		}
 	    	}
     	}
+
+		
+		@Override
+	    public String getHttpUrl() {
+			return url;
+		}
 
 		@Override
 		public int getHttpResponseCode() {
@@ -242,9 +274,13 @@ protected ZoneMinderData convertToClass(JsonObject object, Type classType){
 
 
 		protected void setHttpResponse(ZoneMinderSession session) {
-			responseCode = session.getHttpResponseCode();
-			responseMessage = session.getHttpResponseMessage();
+			if (session!=null) {
+				url = session.getHttpUrl();
+				responseCode = session.getResponseCode();
+				responseMessage = session.getResponseMessage();
+			}
 		}
+
 
 
 

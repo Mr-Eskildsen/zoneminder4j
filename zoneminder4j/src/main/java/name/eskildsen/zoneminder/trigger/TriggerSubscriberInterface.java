@@ -4,8 +4,8 @@ import name.eskildsen.zoneminder.api.telnet.ZoneMinderTriggerEvent;
 
 interface TriggerSubscriberInterface
 {
-	
+
 	public abstract void onTripped(ZoneMinderTriggerEvent event);
-    
- 
+
+
 }

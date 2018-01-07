@@ -1,7 +1,9 @@
 package name.eskildsen.zoneminder.internal;
 
 public class ZoneMinderServerConstants {
-    public static final String SUBPATH_API = "/api";
+	public static final String DEFAULT_PORTAL_SUBPATH = "/zm";
+	public static final String DEFAULT_API_SUBPATH = "/zm/api";
+	
     public static final String SUBPATH_SERVERLOGIN = "/index.php";
     
     public static final String SUBPATH_API_HOST_VERSION_JSON = "/host/getVersion.json";

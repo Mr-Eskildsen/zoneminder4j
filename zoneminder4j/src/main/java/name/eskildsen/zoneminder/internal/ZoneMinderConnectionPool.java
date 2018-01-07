@@ -5,6 +5,7 @@ import java.security.GeneralSecurityException;
 
 import javax.security.auth.login.FailedLoginException;
 
+import name.eskildsen.zoneminder.api.exception.ZoneMinderApiNotEnabledException;
 import name.eskildsen.zoneminder.exception.ZoneMinderUrlNotFoundException;
 
 public class ZoneMinderConnectionPool extends ObjectPool<ZoneMinderSession> {
@@ -17,19 +18,19 @@ public class ZoneMinderConnectionPool extends ObjectPool<ZoneMinderSession> {
 		
 		try {
 			initialize(1);
-		} catch (FailedLoginException | IOException | ZoneMinderUrlNotFoundException e) {
+		} catch (FailedLoginException | IOException | ZoneMinderUrlNotFoundException | ZoneMinderApiNotEnabledException e) {
 					//Just ignore it here
 		}
 	}
 			
 	
 	@Override
-	protected ZoneMinderSession onCreate() throws FailedLoginException, IOException, ZoneMinderUrlNotFoundException {
+	protected ZoneMinderSession onCreate() throws FailedLoginException, IOException, ZoneMinderUrlNotFoundException, ZoneMinderApiNotEnabledException {
 		ZoneMinderSession session = null;
 		try {
 			session = new ZoneMinderSession(connection, true, false);
-		} catch (IllegalArgumentException  e) {
-
+		} catch (IllegalArgumentException  eW) {
+			
 		}
 		return session;
 	}
