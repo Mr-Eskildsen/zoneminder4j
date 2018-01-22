@@ -1,7 +1,9 @@
 package name.eskildsen.zoneminder.internal;
 
 
+import java.awt.image.BufferedImageOp;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
@@ -11,6 +13,8 @@ import javax.security.auth.login.FailedLoginException;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
 
 import name.eskildsen.zoneminder.IZoneMinderConnectionInfo;
 import name.eskildsen.zoneminder.IZoneMinderDaemonStatus;
@@ -22,6 +26,7 @@ import name.eskildsen.zoneminder.IZoneMinderServer;
 import name.eskildsen.zoneminder.IZoneMinderSession;
 
 import name.eskildsen.zoneminder.api.ZoneMinderDiskUsage;
+import name.eskildsen.zoneminder.api.ZoneMinderResponseData;
 import name.eskildsen.zoneminder.api.config.ZoneMinderConfig;
 import name.eskildsen.zoneminder.api.config.ZoneMinderConfigEnum;
 import name.eskildsen.zoneminder.api.daemon.ZoneMinderDaemonStatus;
@@ -31,6 +36,7 @@ import name.eskildsen.zoneminder.api.host.ZoneMinderHostLoad;
 import name.eskildsen.zoneminder.api.host.ZoneMinderHostVersion;
 import name.eskildsen.zoneminder.api.monitor.ZoneMinderMonitorData;
 import name.eskildsen.zoneminder.exception.ZoneMinderUrlNotFoundException;
+import name.eskildsen.zoneminder.trigger.ZoneMinderEventNotifier;
 
 public class ZoneMinderServerProxy  extends ZoneMinderGenericProxy implements IZoneMinderServer {
 
@@ -63,9 +69,8 @@ public class ZoneMinderServerProxy  extends ZoneMinderGenericProxy implements IZ
 			return (config.getValueAsString().equals("1") ? true : false);
 		}
 		catch(Exception ex) {
-
+			return false;
 		}
-		return true;
 	}
 
 
@@ -82,9 +87,7 @@ public class ZoneMinderServerProxy  extends ZoneMinderGenericProxy implements IZ
 	}
 
 
-
-
-
+	
 
 	/** *****************************************************
 	 * 
@@ -114,7 +117,10 @@ public class ZoneMinderServerProxy  extends ZoneMinderGenericProxy implements IZ
 		return (IZoneMinderDiskUsage)convertToClass(null, ZoneMinderDiskUsage.class);
 
 	}
-	/** *****************************************************
+	
+	
+	
+	/*******************************************************
 	 * 
 	 * Host API
 	 * 
@@ -160,8 +166,14 @@ public class ZoneMinderServerProxy  extends ZoneMinderGenericProxy implements IZ
 
 		ZoneMinderHostDaemonStatus daemonState = null;
 		try {
-			Integer curState = getAsJson(ZoneMinderServerConstants.SUBPATH_API_HOST_DAEMON_CHECKSTATE).get("result").getAsInt();
+			JsonObject jsonObject = getAsJson(ZoneMinderServerConstants.SUBPATH_API_HOST_DAEMON_CHECKSTATE);
+			//Integer curState = getAsJson(ZoneMinderServerConstants.SUBPATH_API_HOST_DAEMON_CHECKSTATE).get("result").getAsInt();
+			/* TODO:: GSON CRAPx½
 			daemonState = (ZoneMinderHostDaemonStatus) ZoneMinderDaemonStatus.Create(ZoneMinderDaemonType.DAEMON_HOST, curState, null);
+			daemonState.setHttpResponseCode(getHttpResponseCode());
+			daemonState.setHttpResponseMessage(getHttpResponseMessage());
+			*/
+			daemonState = ZoneMinderResponseData.createFromJson(jsonObject, ZoneMinderHostDaemonStatus.class);
 			daemonState.setHttpResponseCode(getHttpResponseCode());
 			daemonState.setHttpResponseMessage(getHttpResponseMessage());
 
@@ -210,7 +222,12 @@ public class ZoneMinderServerProxy  extends ZoneMinderGenericProxy implements IZ
 		ArrayList<IZoneMinderMonitorData> arrMonitor = new ArrayList<IZoneMinderMonitorData>();
 		for (JsonElement cur : arrMonitorJson) {
 
-			arrMonitor.add(gson.fromJson(((JsonObject)cur).getAsJsonObject("Monitor"), ZoneMinderMonitorData.class));
+
+			ZoneMinderMonitorData monitorData = ZoneMinderResponseData.createFromJson(((JsonObject)cur).getAsJsonObject("Monitor"), ZoneMinderMonitorData.class);
+			arrMonitor.add(monitorData);
+			//arrMonitor.add(gson.fromJson(((JsonObject)cur).getAsJsonObject("Monitor"), ZoneMinderMonitorData.class));
+			//arrMonitor.add(ZoneMinderMonitorData.fromJson(((JsonObject)cur).getAsJsonObject("Monitor")));
+			
 		}
 		return arrMonitor;
 	}
@@ -219,67 +236,7 @@ public class ZoneMinderServerProxy  extends ZoneMinderGenericProxy implements IZ
 
 
 
-	/** *****************************************************
-	 * 
-	 * Config API
-	 * 
-	 ***************************************************** */    
-	public ZoneMinderConfig getConfig(ZoneMinderConfigEnum configId) {
-
-		ZoneMinderConfig configData = null;
-		JsonObject jsonObject = null;
-
-
-		try {
-			jsonObject = getAsJson(resolveCommands(ZoneMinderServerConstants.SUBPATH_API_SERVER_GET_CONFIG_JSON, "ConfigId", configId.name()))
-					.getAsJsonObject("config").getAsJsonObject("Config");
-
-			configData = gson.fromJson(jsonObject, ZoneMinderConfig.class);
-
-			configData.setHttpResponseCode(getHttpResponseCode());
-			configData.setHttpResponseMessage(getHttpResponseMessage());
-
-		} catch (FailedLoginException | ZoneMinderUrlNotFoundException | IOException e) {
-			configData = null;
-		}
-
-		if (jsonObject == null) {
-			return null;
-		}
-
-		return configData;
-	}
-
 	
-	
-	public boolean setConfig(ZoneMinderConfigEnum configId, Boolean newValue) {
-		ZoneMinderConfig config = getConfig(configId);
-		if (config.getDataType().equalsIgnoreCase("boolean")) {
-			if (setConfig(configId, newValue.toString())) {
-				config = getConfig(configId);
-				if (config.getValueAsString().equalsIgnoreCase(newValue.toString())) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	
-	public boolean setConfig(ZoneMinderConfigEnum configId, String value) {
-		boolean result = false;
-
-		try {
-			String methodPath = resolveCommands(ZoneMinderServerConstants.SUBPATH_API_SERVER_SET_CONFIG_JSON, "ConfigId", configId.name());
-			String queryString = resolveCommands(QUERY_CONFIG_UPDATE, "configValue", value);
-
-			sendPost(methodPath, queryString);
-			result = true;
-		} catch (Exception e) {
-			result = false;
-		}
-		return result;
-	}
 
 
 }

@@ -12,11 +12,11 @@ public class ZoneMinderHostVersion extends ZoneMinderResponseData implements IZo
 
 	@SerializedName("version")
 	@Expose
-    private String Version;
+    protected String Version;
 
 	@SerializedName("apiversion")
 	@Expose
-    private String ApiVersion;
+	protected String ApiVersion;
 
     public String getVersion() {
     	return Version;

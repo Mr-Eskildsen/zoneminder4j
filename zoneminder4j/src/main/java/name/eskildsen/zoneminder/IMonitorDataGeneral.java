@@ -25,7 +25,7 @@ public interface IZoneMinderMonitorData extends  IZoneMinderResponse {
 	
 	String getFormat();
 	
-	Boolean getV4LMultiBuffer();
+	boolean getV4LMultiBuffer();
 	
 	String getV4LCapturesPerFrame();
 

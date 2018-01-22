@@ -1,5 +1,11 @@
 package name.eskildsen.zoneminder.api.monitor;
 
+import java.lang.reflect.Field;
+
+import javax.ws.rs.GET;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
@@ -49,9 +55,11 @@ public class ZoneMinderMonitorData extends ZoneMinderResponseData implements IZo
 	@SerializedName("Format")
 	@Expose
 	private String format;
+	
 	@SerializedName("V4LMultiBuffer")
 	@Expose
 	private Boolean v4LMultiBuffer;
+	
 	@SerializedName("V4LCapturesPerFrame")
 	@Expose
 	private String v4LCapturesPerFrame;
@@ -236,6 +244,52 @@ public class ZoneMinderMonitorData extends ZoneMinderResponseData implements IZo
 	private String sequence;
 
 	
+	
+	/*public static ZoneMinderMonitorData fromJson(JsonObject jsonObject)
+	{
+		ZoneMinderMonitorData monitorData = new ZoneMinderMonitorData();
+		//JsonObject jsonObject1 = jsonObject.getAsJsonObject("Monitor");
+				
+		for(Field field  : ZoneMinderMonitorData.class.getDeclaredFields())
+		{
+		    if (field.isAnnotationPresent(SerializedName.class))
+	        {
+		    	      //do action
+		    	SerializedName sn = (SerializedName)field.getAnnotation(SerializedName.class);
+		    	String value = sn.value();
+		    	String valueJson = "";
+		    	Integer i = 10;
+		    	Object curType = null;
+		    	try {
+		    		
+		    		JsonElement element = jsonObject.get(value);
+		    		curType  = field.getType();
+		    		if (field.getType()==String.class) {
+		    			field.set(monitorData, element.getAsString());
+		    		}
+		    		else if (field.getType()==Boolean.class) {
+		    			field.set(monitorData, element.getAsBoolean());
+		    			
+		    		}
+		    		else {
+		    			//TODO:: FIX THIS GSON STuff
+		    			Integer Test = 1000;
+		    		}
+		    		
+
+		    	}
+		    	catch(Exception ex) {
+		    		Integer i2 = 10;
+		    	}
+		        
+		    }
+		}
+		
+		return monitorData;
+		
+	}
+	*/
+	
 	public String getId()
 	{
 		return id; 
@@ -308,7 +362,7 @@ public class ZoneMinderMonitorData extends ZoneMinderResponseData implements IZo
 
 
 	@Override
-	public Boolean getV4LMultiBuffer() {
+	public boolean getV4LMultiBuffer() {
 		return v4LMultiBuffer;
 	}
 

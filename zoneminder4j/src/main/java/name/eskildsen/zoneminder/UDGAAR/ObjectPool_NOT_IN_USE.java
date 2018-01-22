@@ -13,6 +13,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import javax.security.auth.login.FailedLoginException;
 
 import name.eskildsen.zoneminder.api.exception.ZoneMinderApiNotEnabledException;
+import name.eskildsen.zoneminder.api.exception.ZoneMinderCredentialsMissingException;
 import name.eskildsen.zoneminder.exception.ZoneMinderUrlNotFoundException;
 
 public abstract class ObjectPool<T> {
@@ -44,13 +45,13 @@ public abstract class ObjectPool<T> {
 		// initialize pool
 		try {
 			initialize(0);
-		} catch (FailedLoginException | IOException | ZoneMinderUrlNotFoundException | ZoneMinderApiNotEnabledException e) {
+		} catch (FailedLoginException | IOException | ZoneMinderUrlNotFoundException | ZoneMinderApiNotEnabledException|ZoneMinderCredentialsMissingException e) {
 			//Just Ignore it here
 		}
 	}
 
 
-	public void maintainPool() throws FailedLoginException, IOException, ZoneMinderUrlNotFoundException, ZoneMinderApiNotEnabledException {
+	public void maintainPool() throws FailedLoginException, IOException, ZoneMinderUrlNotFoundException, ZoneMinderApiNotEnabledException, ZoneMinderCredentialsMissingException {
 		int sizeToBeAdded = 0;
 		int sizeToBeRemoved = 0;
 
@@ -104,7 +105,7 @@ public abstract class ObjectPool<T> {
 		// initialize pool
 		try {
 			initialize(0);
-		} catch (FailedLoginException | IOException | ZoneMinderUrlNotFoundException | ZoneMinderApiNotEnabledException e1) {
+		} catch (FailedLoginException | IOException | ZoneMinderUrlNotFoundException | ZoneMinderApiNotEnabledException |ZoneMinderCredentialsMissingException e1) {
 			//Just ignore it here
 		}
 
@@ -117,7 +118,9 @@ public abstract class ObjectPool<T> {
 			public void run() {
 				try {
 					maintainPool();
-				} catch (FailedLoginException | IOException | ZoneMinderUrlNotFoundException | ZoneMinderApiNotEnabledException e) {
+				} catch (FailedLoginException | IOException | ZoneMinderUrlNotFoundException | ZoneMinderApiNotEnabledException| ZoneMinderCredentialsMissingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
 			}
 		}, validationInterval, validationInterval, TimeUnit.SECONDS);
@@ -141,7 +144,7 @@ public abstract class ObjectPool<T> {
 	 * @throws FailedLoginException 
 	 * @throws ZoneMinderApiNotEnabledException 
 	 */
-	public  T checkOut() throws FailedLoginException, IOException, ZoneMinderUrlNotFoundException, ZoneMinderApiNotEnabledException {
+	public  T checkOut() throws FailedLoginException, IOException, ZoneMinderUrlNotFoundException, ZoneMinderApiNotEnabledException, ZoneMinderCredentialsMissingException {
 		T object = null;
 		//Just stop, not connected
 		if(connected==false)
@@ -229,7 +232,7 @@ public abstract class ObjectPool<T> {
 		}
 	}
 
-	protected T create() throws FailedLoginException, IOException, ZoneMinderUrlNotFoundException, ZoneMinderApiNotEnabledException{
+	protected T create() throws FailedLoginException, IOException, ZoneMinderUrlNotFoundException, ZoneMinderApiNotEnabledException, ZoneMinderCredentialsMissingException{
 		T result = null;
 
 		try {
@@ -288,10 +291,11 @@ public abstract class ObjectPool<T> {
 	 * @throws IOException 
 	 * @throws FailedLoginException 
 	 * @throws ZoneMinderApiNotEnabledException 
+	 * @throws ZoneMinderCredentialsMissingException 
 	 */
-	protected abstract T onCreate() throws FailedLoginException, IOException, ZoneMinderUrlNotFoundException, ZoneMinderApiNotEnabledException;
+	protected abstract T onCreate() throws FailedLoginException, IOException, ZoneMinderUrlNotFoundException, ZoneMinderApiNotEnabledException, ZoneMinderCredentialsMissingException;
 
-	protected void initialize(int newSize) throws IOException, ZoneMinderUrlNotFoundException, FailedLoginException, ZoneMinderApiNotEnabledException
+	protected void initialize(int newSize) throws IOException, ZoneMinderUrlNotFoundException, FailedLoginException, ZoneMinderApiNotEnabledException, ZoneMinderCredentialsMissingException
 	{
 		if (unlocked==null){
 			unlocked = new LinkedBlockingQueue<T>();

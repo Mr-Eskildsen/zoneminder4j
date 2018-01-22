@@ -6,11 +6,11 @@ import name.eskildsen.zoneminder.api.telnet.ZoneMinderTriggerEvent;
 import name.eskildsen.zoneminder.internal.ZoneMinderConnectionInfo;
 import name.eskildsen.zoneminder.internal.ZoneMinderSession;
 
-public class ZoneMinderEventSubscriber_UDGAAR implements IZoneMinderEventSubscriber {
+public class ZoneMinderEventSubscriber_NOT_IN_USE implements IZoneMinderEventSubscriber {
 	private ZoneMinderSession sessionTelnet = null; 
 	private ZoneMinderConnectionInfo connectionTelnet = null;
 	
-	public ZoneMinderEventSubscriber_UDGAAR(IZoneMinderConnectionInfo connection)
+	public ZoneMinderEventSubscriber_NOT_IN_USE(IZoneMinderConnectionInfo connection)
 	{
 		connectionTelnet = (ZoneMinderConnectionInfo)connection;
 		

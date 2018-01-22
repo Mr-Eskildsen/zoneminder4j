@@ -12,6 +12,7 @@ import name.eskildsen.zoneminder.IZoneMinderEventSubscriber;
 import name.eskildsen.zoneminder.api.config.ZoneMinderConfig;
 import name.eskildsen.zoneminder.api.config.ZoneMinderConfigEnum;
 import name.eskildsen.zoneminder.api.exception.ZoneMinderApiNotEnabledException;
+import name.eskildsen.zoneminder.api.exception.ZoneMinderCredentialsMissingException;
 import name.eskildsen.zoneminder.api.telnet.ZoneMinderTriggerEvent;
 import name.eskildsen.zoneminder.exception.ZoneMinderUrlNotFoundException;
 import name.eskildsen.zoneminder.trigger.ZoneMinderEventNotifier;
@@ -82,11 +83,11 @@ public class ZoneMinderEventManager extends ZoneMinderEventNotifier  implements 
 
 	   
 		//TODO Create specific telnet session, because API Exception shouldn't be relevant
-	   protected boolean verifyTelnetConnection(ZoneMinderConnectionInfo connection)  {
+	   protected boolean verifyTelnetConnection(ZoneMinderConnectionInfo connection)   {
 			try {
 				ZoneMinderSession session = new ZoneMinderSession(connection, false, true);
 				   return session.isConnectedTelnet();
-			} catch (FailedLoginException | IllegalArgumentException | IOException | ZoneMinderUrlNotFoundException | ZoneMinderApiNotEnabledException e) {
+			} catch (FailedLoginException | IllegalArgumentException | IOException | ZoneMinderUrlNotFoundException | ZoneMinderApiNotEnabledException | ZoneMinderCredentialsMissingException e) {
 				return false;
 			}
 
@@ -98,7 +99,7 @@ public class ZoneMinderEventManager extends ZoneMinderEventNotifier  implements 
 		   try {
 			   ZoneMinderSession session = new ZoneMinderSession(connection, true, false);
 			   return session.isConnectedHttp();
-			} catch (FailedLoginException | IllegalArgumentException | IOException | ZoneMinderUrlNotFoundException | ZoneMinderApiNotEnabledException e) {
+			} catch (FailedLoginException | IllegalArgumentException | IOException | ZoneMinderUrlNotFoundException | ZoneMinderApiNotEnabledException | ZoneMinderCredentialsMissingException e) {
 				return false;
 			}
 
@@ -171,7 +172,7 @@ public class ZoneMinderEventManager extends ZoneMinderEventNotifier  implements 
 	    		 
 	    	}
 	    	
-	    	private void connect() throws FailedLoginException, IllegalArgumentException, IOException, ZoneMinderUrlNotFoundException {
+	    	private void connect() throws FailedLoginException, IllegalArgumentException, IOException, ZoneMinderUrlNotFoundException, ZoneMinderCredentialsMissingException {
 	    		try {
 	    			sessionTelnet = new ZoneMinderSession(connection, false, true );
 	    		} catch (ZoneMinderApiNotEnabledException e) {
@@ -230,7 +231,9 @@ public class ZoneMinderEventManager extends ZoneMinderEventNotifier  implements 
 							Thread.sleep(1000);
 						} catch (InterruptedException e) {
 						}
-		        	}
+		        	} catch (ZoneMinderCredentialsMissingException e) {
+						// TODO Auto-generated catch block
+					}
                 	
 	            }
 	        }	   
@@ -243,7 +246,7 @@ public class ZoneMinderEventManager extends ZoneMinderEventNotifier  implements 
 			   try {
 				   ZoneMinderSession session = new ZoneMinderSession(connection, true, false);
 				   return session.isConnectedHttp();
-				} catch (FailedLoginException e) {
+				} catch (FailedLoginException | ZoneMinderCredentialsMissingException e) {
 					return false;
 				}
 			   
@@ -258,7 +261,7 @@ public class ZoneMinderEventManager extends ZoneMinderEventNotifier  implements 
 					ZoneMinderServerProxy server = new ZoneMinderServerProxy(session);
 					return server.isApiEnabled();
 
-				} catch (NullPointerException | ZoneMinderApiNotEnabledException e) {
+				} catch (NullPointerException | ZoneMinderApiNotEnabledException |ZoneMinderCredentialsMissingException e) {
 					return false;
 				}
 		}
@@ -270,7 +273,7 @@ public class ZoneMinderEventManager extends ZoneMinderEventNotifier  implements 
 					session = new ZoneMinderSession(connection, true, false);
 					ZoneMinderServerProxy server = new ZoneMinderServerProxy(session);
 					return server.isTriggerOptionEnabled();
-				} catch (NullPointerException e) {
+				} catch (NullPointerException |ZoneMinderCredentialsMissingException e) {
 					return false;
 				}
 		}
@@ -282,7 +285,7 @@ public class ZoneMinderEventManager extends ZoneMinderEventNotifier  implements 
 				   	ZoneMinderSession session = null;
 				   	session = new ZoneMinderSession(connection, true, false, false);
 					return session.isZoneMinderSite();
-				} catch (NullPointerException |FailedLoginException | IOException | ZoneMinderUrlNotFoundException e) {
+				} catch (NullPointerException |FailedLoginException | IOException | ZoneMinderUrlNotFoundException |ZoneMinderCredentialsMissingException e) {
 					return false;
 				}
 		}

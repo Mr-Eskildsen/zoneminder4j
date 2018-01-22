@@ -1,7 +1,9 @@
 package name.eskildsen.zoneminder;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 
 import javax.security.auth.login.FailedLoginException;
@@ -39,6 +41,13 @@ public interface IZoneMinderMonitor extends IZoneMinderResponse {
     IZoneMinderDaemonStatus getAnalysisDaemonStatus();
     IZoneMinderDaemonStatus getFrameDaemonStatus();
 
+    
+    String getMonitorStreamingPath() throws MalformedURLException;
+    
+    IZoneMinderMonitorImage getMonitorStillImage() throws MalformedURLException;
+    IZoneMinderMonitorImage getMonitorStillImage(Integer scale) throws MalformedURLException;
+    IZoneMinderMonitorImage getMonitorStillImage(Integer scale, Integer buffer) throws MalformedURLException;
+    
     /** *****************************************************
      * Event API
       ***************************************************** */

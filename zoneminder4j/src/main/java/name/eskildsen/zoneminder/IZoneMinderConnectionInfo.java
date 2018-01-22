@@ -24,18 +24,26 @@ public interface IZoneMinderConnectionInfo {
 
 	public String getPassword();
 
-	//public String getZoneMinderBasePath();
 	public String getLoggerId();
 
-	public URI getZoneMinderRootUri() throws MalformedURLException;
+	public URI getZoneMinderRootUri_() throws MalformedURLException;
 	public URI getZoneMinderPortalUri() throws MalformedURLException;
 
 	public Integer getTimeout();
 
-	public URI getZoneMinderApiBaseUri() throws MalformedURLException;
 	public URI buildZoneMinderPortalUri(String subPath) throws MalformedURLException;
+	
+	public URI getZoneMinderApiBaseUri() throws MalformedURLException;
 	public URI buildZoneMinderApiUri(String subPath) throws MalformedURLException;
 
+
+	String getConfigAuthenticationHashSecret();
+	boolean isAuthenticationHashAllowed();
+
+	boolean isAuthenticationEnabled();
+	boolean isApiEnabled();
+
+	
 	public String printDebug();
 	
 	public void setLogLevel(LogLevel level);

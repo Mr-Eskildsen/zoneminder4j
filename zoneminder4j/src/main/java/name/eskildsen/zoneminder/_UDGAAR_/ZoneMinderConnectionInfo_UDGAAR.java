@@ -4,6 +4,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.security.GeneralSecurityException;
+import java.util.Calendar;
 import java.util.List;
 
 import javax.ws.rs.core.UriBuilder;
@@ -109,6 +110,30 @@ public class ZoneMinderConnectionInfo implements IZoneMinderConnectionInfo {
     public Integer getTimeout() {return timeout;}
     public String getLoggerId() {return loggerId;}
     
+
+    
+    
+    private boolean bUseAuthentication = false;
+	private boolean bApiEnabled = false;
+	private boolean allowHashSecrets = false;
+	private String authenticationHashSecret = null;
+	
+	public void setAuthenticationEnabled(boolean enabled) {bUseAuthentication = enabled;}
+	public void setApiEnabled(boolean enabled) {bApiEnabled = enabled;}
+
+	//TODO: make thread safe
+	public void setConfigAuthenticationHashAllowed(boolean allowHashSecrets) {this.allowHashSecrets = allowHashSecrets;}
+	//TODO: make thread safe
+	public void setConfigAuthenticationHashSecret(String authenticationHashSecret) {this.authenticationHashSecret = authenticationHashSecret;}
+	
+	//TODO: make thread safe
+	public String getConfigAuthenticationHashSecret() {return this.authenticationHashSecret;}
+	
+	public boolean isAuthenticationHashAllowed() { return this.allowHashSecrets;}
+
+	public boolean isAuthenticationEnabled() {return bUseAuthentication;}
+	public boolean isApiEnabled() {return bApiEnabled;}
+
     public void setLogLevel(LogLevel level) 
     {
     	
@@ -119,9 +144,9 @@ public class ZoneMinderConnectionInfo implements IZoneMinderConnectionInfo {
     	}
 	}
     
+    
     public URI getZoneMinderApiBaseUri() throws MalformedURLException {
     	
-    	//return UriBuilder.fromUri(getZoneMinderRootUri()).path(ZoneMinderServerConstants.SUBPATH_API).build();
     	return UriBuilder.fromUri((new URL(getProtocolName(), getHostName(), getHttpPort(), getZoneMinderApiPath() )).toString()).build();
     }
     
@@ -132,9 +157,9 @@ public class ZoneMinderConnectionInfo implements IZoneMinderConnectionInfo {
     }
 
 
-    public URI getZoneMinderRootUri() throws MalformedURLException {
+    public URI getZoneMinderRootUri_() throws MalformedURLException {
 		
-    	return getZoneMinderPortalUri();
+    	return UriBuilder.fromUri((new URL(getProtocolName(), getHostName(), getHttpPort(), "" )).toString()).build();
     }
 
     
@@ -143,6 +168,7 @@ public class ZoneMinderConnectionInfo implements IZoneMinderConnectionInfo {
 		return UriBuilder.fromUri(root).path(subPath).build();
 	}
 
+	
 
 	@Override
 	public URI buildZoneMinderPortalUri(String subPath) throws MalformedURLException {
@@ -151,6 +177,7 @@ public class ZoneMinderConnectionInfo implements IZoneMinderConnectionInfo {
 		return buildZoneMinderUri(getZoneMinderPortalUri(), subPath);
 	}
 
+	
 	@Override
 	public URI buildZoneMinderApiUri(String subPath) throws MalformedURLException {
 		
@@ -161,5 +188,7 @@ public class ZoneMinderConnectionInfo implements IZoneMinderConnectionInfo {
 	{
 		return String.format("Protocol='%s', Type='%s', Host='%s', PortalPort='%d', TelnetPort='%d', User='%s', Password='%s', PortalPath='%s', ApiPath='%s', Timeoutr='%d'", getProtocolName(), getProtocolType(), getHostName(), getHttpPort(), getTelnetPort(),getUserName(), getPassword(), getZoneMinderPortalPath(), getZoneMinderApiPath(), getTimeout());
 	}
+
+
 
 }

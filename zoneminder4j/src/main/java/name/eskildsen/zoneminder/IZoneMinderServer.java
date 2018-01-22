@@ -36,7 +36,16 @@ public interface IZoneMinderServer extends IZoneMinderResponse {
 	 ***************************************************** */
 	boolean isConnected();
 	boolean isApiEnabled();
+
+	/* ******************************************************
+	 * 
+	 * Call to query server settings 
+	 * 
+	 ***************************************************** */
 	boolean isTriggerOptionEnabled();
+	
+	
+	
 
 	/* ******************************************************
 	 * 

@@ -7,25 +7,12 @@ import name.eskildsen.zoneminder.api.ZoneMinderResponseData;
 
 public abstract class ZoneMinderDaemonStatus extends ZoneMinderResponseData {
 
-	@SerializedName("status")
-	@Expose
-	private Boolean status;
 	
 	
-	@SerializedName("statustext")
-	@Expose
-	private String statusText;
+	public abstract boolean getStatus();
 	
-	
-	public boolean getStatus() {
-		return status;
-	}
-	
-	
-	public String getStatusText() {
-		return statusText;
-	}
-	
+
+	/*
 	public static ZoneMinderDaemonStatus Create(ZoneMinderDaemonType daemonType, Integer daemonState, String daemonStatusText){
 		
 		ZoneMinderDaemonStatus newDaemon = null;
@@ -50,4 +37,5 @@ public abstract class ZoneMinderDaemonStatus extends ZoneMinderResponseData {
 
 		return newDaemon;
 	}
+	*/
 }

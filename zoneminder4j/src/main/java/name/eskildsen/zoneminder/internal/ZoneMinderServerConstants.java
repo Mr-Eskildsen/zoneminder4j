@@ -18,6 +18,7 @@ public class ZoneMinderServerConstants {
     public static final String SUBPATH_API_MONITOR_ALARM_JSON = "/monitors/alarm/id:{MonitorId}/command:status.json"; 
     
     public static final String SUBPATH_API_EVENTS_SPECIFIC_MONITOR_JSON = "/events/index/MonitorId:{MonitorId}.json";
+    public static final String SUBPATH_API_EVENTS_SPECIFIC_EVENT_JSON = "/events/index/Id:{EventId}.json";
     
     public static final String SUBPATH_API_SERVER_GET_CONFIG_JSON = "/configs/view/{ConfigId}.json";
     public static final String SUBPATH_API_SERVER_SET_CONFIG_JSON = "/configs/edit/{ConfigId}.json";

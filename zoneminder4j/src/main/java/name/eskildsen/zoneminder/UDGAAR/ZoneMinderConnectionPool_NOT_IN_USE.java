@@ -6,26 +6,27 @@ import java.security.GeneralSecurityException;
 import javax.security.auth.login.FailedLoginException;
 
 import name.eskildsen.zoneminder.api.exception.ZoneMinderApiNotEnabledException;
+import name.eskildsen.zoneminder.api.exception.ZoneMinderCredentialsMissingException;
 import name.eskildsen.zoneminder.exception.ZoneMinderUrlNotFoundException;
 
 public class ZoneMinderConnectionPool extends ObjectPool<ZoneMinderSession> {
 	private ZoneMinderConnectionInfo connection = null;
 				
-	public ZoneMinderConnectionPool(ZoneMinderConnectionInfo conn, Integer initialSize, Integer maxSize){
+	public ZoneMinderConnectionPool(ZoneMinderConnectionInfo conn, Integer initialSize, Integer maxSize) {
 		super( initialSize, maxSize, 300);
 
 		connection = conn;
 		
 		try {
 			initialize(1);
-		} catch (FailedLoginException | IOException | ZoneMinderUrlNotFoundException | ZoneMinderApiNotEnabledException e) {
+		} catch (FailedLoginException | IOException | ZoneMinderUrlNotFoundException | ZoneMinderApiNotEnabledException | ZoneMinderCredentialsMissingException e) {
 					//Just ignore it here
 		}
 	}
 			
 	
 	@Override
-	protected ZoneMinderSession onCreate() throws FailedLoginException, IOException, ZoneMinderUrlNotFoundException, ZoneMinderApiNotEnabledException {
+	protected ZoneMinderSession onCreate() throws FailedLoginException, IOException, ZoneMinderUrlNotFoundException, ZoneMinderApiNotEnabledException, ZoneMinderCredentialsMissingException {
 		ZoneMinderSession session = null;
 		try {
 			session = new ZoneMinderSession(connection, true, false);
