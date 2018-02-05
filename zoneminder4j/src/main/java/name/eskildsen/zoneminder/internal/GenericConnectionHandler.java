@@ -251,7 +251,7 @@ public abstract class GenericConnectionHandler extends HttpCore implements IZone
 
 	@Override
 	public boolean isAuthenticationHashAllowed() {
-		return this.allowHashSecrets;
+		return (authticationHashRelayMethod.equalsIgnoreCase("none") && allowHashSecrets);
 	}
 	
 	@Override

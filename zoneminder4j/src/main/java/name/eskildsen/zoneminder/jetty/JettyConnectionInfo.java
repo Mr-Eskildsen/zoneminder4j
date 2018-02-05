@@ -296,7 +296,7 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 								buildURI(getApiUri(),resolvePlaceholder(ZoneMinderServerConstants.SUBPATH_API_SERVER_GET_CONFIG_JSON, "ConfigId", ZoneMinderConfigEnum.ZM_AUTH_HASH_LOGINS.name())), HttpMethod.GET, null );
 			//TODO Fix hardcoded names
 			cfgAuthHashLogins = ZoneMinderCoreData.createFromJson(jsonResponse.getJsonObject().getAsJsonObject("config").getAsJsonObject("Config"), jsonResponse.getHttpStatus(), jsonResponse.getHttpMessage(), jsonResponse.getRequestURI(), ZoneMinderConfig.class);
-			setAuthenticationEnabled(cfgAuthHashLogins.getvalueAsBoolean());
+			setAuthenticationHashAllowed(cfgAuthHashLogins.getvalueAsBoolean());
 			
 			jsonResponse = fetchDataAsJson( 
 								buildURI(getApiUri(),resolvePlaceholder(ZoneMinderServerConstants.SUBPATH_API_SERVER_GET_CONFIG_JSON, "ConfigId", ZoneMinderConfigEnum.ZM_AUTH_RELAY.name())), HttpMethod.GET, null );

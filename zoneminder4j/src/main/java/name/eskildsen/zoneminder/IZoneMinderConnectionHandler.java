@@ -1,12 +1,9 @@
 package name.eskildsen.zoneminder;
 
-import java.io.ByteArrayOutputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.util.List;
-import java.util.Map;
 
-import javax.ws.rs.core.UriBuilderException;
 
 import org.eclipse.jetty.http.HttpMethod;
 
@@ -14,7 +11,6 @@ import name.eskildsen.zoneminder.api.exception.ZoneMinderAuthHashNotEnabled;
 import name.eskildsen.zoneminder.exception.ZoneMinderAuthenticationException;
 import name.eskildsen.zoneminder.exception.ZoneMinderException;
 import name.eskildsen.zoneminder.exception.ZoneMinderGeneralException;
-import name.eskildsen.zoneminder.exception.ZoneMinderStreamConfigException;
 import name.eskildsen.zoneminder.exception.http.ZoneMinderResponseException;
 import name.eskildsen.zoneminder.general.ProtocolType;
 import name.eskildsen.zoneminder.internal.ZoneMinderContentResponse;
