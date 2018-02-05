@@ -2,7 +2,6 @@ package name.eskildsen.zoneminder.exception;
 
 import java.net.URI;
 
-import javax.ws.rs.core.UriBuilder;
 
 public class ZoneMinderUrlNotFoundException extends Exception {
 	public ZoneMinderUrlNotFoundException(URI uriLogin) {

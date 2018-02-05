@@ -1,37 +1,19 @@
 package name.eskildsen.zoneminder;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.util.ArrayList;
-import java.util.List;
 
-import javax.security.auth.login.FailedLoginException;
+import java.net.MalformedURLException;
 
-import name.eskildsen.zoneminder.api.config.ZoneMinderConfig;
-import name.eskildsen.zoneminder.api.config.ZoneMinderConfigEnum;
-import name.eskildsen.zoneminder.api.exception.ZoneMinderApiNotEnabledException;
-import name.eskildsen.zoneminder.api.exception.ZoneMinderCredentialsMissingException;
-import name.eskildsen.zoneminder.exception.ZoneMinderNotLoggedInException;
-import name.eskildsen.zoneminder.exception.ZoneMinderUrlNotFoundException;
-import name.eskildsen.zoneminder.internal.HttpSessionCore;
-import name.eskildsen.zoneminder.internal.ZoneMinderConnectionInfo;
-import name.eskildsen.zoneminder.internal.ZoneMinderEventManager;
-import name.eskildsen.zoneminder.internal.ZoneMinderGenericProxy;
+import name.eskildsen.zoneminder.event.ZoneMinderEventManager;
+import name.eskildsen.zoneminder.exception.ZoneMinderApiNotEnabledException;
+import name.eskildsen.zoneminder.exception.ZoneMinderAuthenticationException;
+import name.eskildsen.zoneminder.exception.ZoneMinderGeneralException;
 import name.eskildsen.zoneminder.internal.ZoneMinderMonitorProxy;
 import name.eskildsen.zoneminder.internal.ZoneMinderServerConstants;
 import name.eskildsen.zoneminder.internal.ZoneMinderServerProxy;
-import name.eskildsen.zoneminder.internal.ZoneMinderSession;
-import name.eskildsen.zoneminder.logging.LogEntry;
-import name.eskildsen.zoneminder.logging.LogFactory;
-import name.eskildsen.zoneminder.logging.LogLevel;
-import name.eskildsen.zoneminder.logging.LogManager;
+import name.eskildsen.zoneminder.jetty.JettyConnectionInfo;
 
 public class ZoneMinderFactory {
 
-	public static String createLogger() {
-		return LogFactory.createLogger();
-	}
-	
 	public static String getDefaultPortalSubpath()
 	{
 		return ZoneMinderServerConstants.DEFAULT_PORTAL_SUBPATH;
@@ -42,7 +24,9 @@ public class ZoneMinderFactory {
 		return ZoneMinderServerConstants.DEFAULT_API_SUBPATH;
 	}
 	
-	
+	/*
+	 * TODO:: UDGAAR
+	 
 	public static List<ILogEntry> getLogEntries(String loggerId) {
 		List<ILogEntry> result = null;
 		try {
@@ -57,47 +41,103 @@ public class ZoneMinderFactory {
 		
 		return result;
 	}
-
+*/
 	
-	public static IZoneMinderConnectionInfo CreateConnection(String protocol, String hostName, Integer portHttp, Integer portTelnet, String userName,
-            String password, String zmPortalSubPath, String zmApiSubPath, Integer timeout) throws GeneralSecurityException, IllegalArgumentException, IOException, ZoneMinderUrlNotFoundException, ZoneMinderApiNotEnabledException, ZoneMinderNotLoggedInException, ZoneMinderCredentialsMissingException {
+	public static IZoneMinderConnectionHandler CreateConnection(String protocol, String hostName, Integer portHttp, Integer portTelnet, String userName,
+            String password, String zmPortalSubPath, String zmApiSubPath, Integer timeout) throws ZoneMinderApiNotEnabledException, ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException {
 		
-		return updateConnectionInfo(new ZoneMinderConnectionInfo(protocol, hostName, portHttp, portTelnet, userName, password, zmPortalSubPath, zmApiSubPath, timeout, null ));
-
+		//return new ZoneMinderConnectionInfo(protocol, hostName, portHttp, portTelnet, userName, password, zmPortalSubPath, zmApiSubPath, timeout, null );
+		JettyConnectionInfo jci =new JettyConnectionInfo(protocol, hostName, portHttp, portTelnet, userName, password, zmPortalSubPath, zmApiSubPath, timeout);
+		if (jci.connect()) {
+			return jci;	
+		}
+		return null;
+		 
 	}
 
-	public static IZoneMinderConnectionInfo CreateConnection(String protocol, String hostName, Integer portHttp, Integer portTelnet, String userName,
-            String password, String zmPortalSubPath, String zmApiSubPath, Integer timeout, String loggerId) throws GeneralSecurityException, IllegalArgumentException, IOException, ZoneMinderUrlNotFoundException, ZoneMinderApiNotEnabledException, ZoneMinderNotLoggedInException, ZoneMinderCredentialsMissingException {
+	@Deprecated
+	protected static IZoneMinderConnectionInfo CreateConnection_OLD(String protocol, String hostName, Integer portHttp, Integer portTelnet, String userName,
+            String password, String zmPortalSubPath, String zmApiSubPath, Integer timeout) throws ZoneMinderApiNotEnabledException, ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException {
 		
-		return updateConnectionInfo(new ZoneMinderConnectionInfo(protocol, hostName, portHttp, portTelnet, userName, password, zmPortalSubPath, zmApiSubPath, timeout, loggerId ));
-
+		//return new ZoneMinderConnectionInfo(protocol, hostName, portHttp, portTelnet, userName, password, zmPortalSubPath, zmApiSubPath, timeout, null );
+		JettyConnectionInfo jci =new JettyConnectionInfo(protocol, hostName, portHttp, portTelnet, userName, password, zmPortalSubPath, zmApiSubPath, timeout);
+		if (jci.connect()) {
+			return null;	
+		}
+		return null;
+		 
 	}
 
-	public static IZoneMinderConnectionInfo CreateConnection(String protocol, String hostName, String userName, String password, String zmPortalSubPath, String zmApiSubPath, String loggerId) throws GeneralSecurityException, IllegalArgumentException, IOException, ZoneMinderUrlNotFoundException, ZoneMinderApiNotEnabledException, ZoneMinderNotLoggedInException, ZoneMinderCredentialsMissingException {
-		return updateConnectionInfo(new ZoneMinderConnectionInfo(protocol, hostName, userName, password, zmPortalSubPath, zmApiSubPath, loggerId));
+	/*//REMOVED BECAUSE JETTY Impolementation
+	public static IZoneMinderConnectionInfo CreateConnection(String protocol, String hostName, Integer portHttp, Integer portTelnet, String userName,
+            String password, String zmPortalSubPath, String zmApiSubPath, Integer timeout, String loggerId) throws FailedLoginException, IllegalArgumentException, IOException, ZoneMinderUrlNotFoundException, ZoneMinderApiNotEnabledException, ZoneMinderAuthenticationException, ZoneMinderGeneralException  {
+		
+		//ZoneMinderConnectionInfo connection = new ZoneMinderConnectionInfo(protocol, hostName, portHttp, portTelnet, userName, password, zmPortalSubPath, zmApiSubPath, timeout, loggerId );
+		JettyConnectionInfo connection = new JettyConnectionInfo(protocol, hostName, portHttp, portTelnet, userName, password, zmPortalSubPath, zmApiSubPath, timeout);
+
+		//TODO:: REMOVED verifyConnectionInfo(connection);
+		 
+		return connection;
+
+	}
+	*/
+/* TODO:: TEMPORARILY REMOVED
+	public static IZoneMinderConnectionInfo CreateConnection(String protocol, String hostName, String userName, String password, String zmPortalSubPath, String zmApiSubPath, String loggerId) throws GeneralSecurityException, IllegalArgumentException, IOException, ZoneMinderUrlNotFoundException, ZoneMinderApiNotEnabledException, ZoneMinderAuthenticationException, ZoneMinderGeneralException {
+		
+		//ZoneMinderConnectionInfo connection = new ZoneMinderConnectionInfo(protocol, hostName, userName, password, zmPortalSubPath, zmApiSubPath, loggerId);
+		JettyConnectionInfo connection = new JettyConnectionInfo(protocol, hostName, userName, password, zmPortalSubPath, zmApiSubPath);
+		//TODO:: REMOVED verifyConnectionInfo(connection);
+		
+		return connection;
 	}
 
-	public static IZoneMinderSession CreateSession(IZoneMinderConnectionInfo connection, boolean connectHttp, boolean connectTelnet) throws ZoneMinderApiNotEnabledException, ZoneMinderCredentialsMissingException, Exception {
-		return new ZoneMinderSession(connection, connectHttp, connectTelnet);
+*/
+	public static IZoneMinderEventSession CreateEventSession(IZoneMinderConnectionHandler connection)
+	{
+
+		return new ZoneMinderEventManager(connection); //ZoneMinderMonitorProxy(session, monitorId);
+	}
+/*	
+	//TODO:: FIX Genereal EXCEPTION IN THROWS
+	public static IZoneMinderHttpSession CreateHttpSession(IZoneMinderConnectionInfo connection) throws ZoneMinderApiNotEnabledException, Exception {
+
+		return new ZoneMinderSession(connection, true, false);
 	}
 
+	@Deprecated
+	public static IZoneMinderHttpSession CreateHttpSession(IZoneMinderConnectionHandler connection) throws ZoneMinderApiNotEnabledException, Exception {
+		return new JettySession(connection);
+	}
+
+*/
+/*	public static IZoneMinderVerification getVerification(IZoneMinderConnectionInfo connection) throws FailedLoginException, IllegalArgumentException, IOException, ZoneMinderUrlNotFoundException
+	{
+		return new ZoneMinderVerification(connection);
+	}
+*/
+/*//TODO:: REMOEVD BECAUSE OF JETTY	
 	
-	protected static IZoneMinderConnectionInfo updateConnectionInfo(ZoneMinderConnectionInfo connection) throws FailedLoginException, IllegalArgumentException, IOException, ZoneMinderUrlNotFoundException, ZoneMinderApiNotEnabledException, ZoneMinderNotLoggedInException, ZoneMinderCredentialsMissingException {
+	//TODO:: CLEANUP
+	public static IZoneMinderConnectionInfo verifyConnectionInfo(ZoneMinderConnectionInfo connection) throws IllegalArgumentException, IOException, ZoneMinderUrlNotFoundException, ZoneMinderApiNotEnabledException, ZoneMinderAuthenticationException, ZoneMinderGeneralException {
 		
-		HttpSessionCore coreSession = new HttpSessionCore(connection);
+		HttpSessionCore coreSession = new HttpSessionCore(connection, true);
 		coreSession.updateZoneMinderConnectionInfoParams(connection);
+
+		coreSession = new HttpSessionCore(connection, true);
 		if (!coreSession.isApiEnabled()) {
 			throw new ZoneMinderApiNotEnabledException();
 		}
 		if (coreSession.isAuthenticationEnabled()) {
 			if (!coreSession.authenticate()) {
-				throw new ZoneMinderNotLoggedInException("");
+				throw new ZoneMinderAuthenticationException("Failed to authenticate");
 			}
 		}
 
 		//Now we should be ready to use the more fancy session handler
 		ZoneMinderSession session = new ZoneMinderSession(connection, true, true, false, false);
+		Boolean isAuthenticated = session.isAuthenticated(); 
 		ZoneMinderGenericProxy proxy = new ZoneMinderGenericProxy(session, true);
+		//ZoneMinderServerProxy proxy = new ZoneMinderServerProxy(session);
 		
 		boolean authHashSettingsCorrect = false;
 		boolean allowHashLogins = false;
@@ -107,6 +147,8 @@ public class ZoneMinderFactory {
 		ZoneMinderConfig configAuthRelay = null;
 		ZoneMinderConfig configAuthSecret = null;
 		
+		//Check hostVersion
+		//IZoneMinderHostVersion hostVersion  = proxy.getHostVersion();
 		
 		//Check if authentication is enabled
 		configAllowHashLogins = proxy.getConfig(ZoneMinderConfigEnum.ZM_AUTH_HASH_LOGINS); //	Allow login by authentication hash (?)
@@ -143,21 +185,22 @@ public class ZoneMinderFactory {
 	
 		return connection;
 	}
+	*/
 	
-	
-	public static IZoneMinderServer getServerProxy(IZoneMinderSession session)
+	public static IZoneMinderServer getServerProxy(IZoneMinderConnectionHandler connection)
 	{
-		return new ZoneMinderServerProxy(session);
+		return new ZoneMinderServerProxy(connection);
 	}
 	
 
-	public static IZoneMinderMonitor getMonitorProxy(IZoneMinderSession session, String monitorId)
+	public static IZoneMinderMonitor getMonitorProxy(IZoneMinderConnectionHandler connection, String monitorId)
 	{
-		return new ZoneMinderMonitorProxy(session, monitorId);
+		return new ZoneMinderMonitorProxy(connection, monitorId);
 	}
-
-
 	
+	
+
+	/*
 	public static boolean isZoneMinderUrl(IZoneMinderConnectionInfo connection) throws IllegalArgumentException, ZoneMinderApiNotEnabledException {
 		
 		return ZoneMinderEventManager.getInstance().isZoneMinderUrl(connection);
@@ -176,12 +219,12 @@ public class ZoneMinderFactory {
 
 	}
 	
-		
+
 	public static boolean validateConnection(IZoneMinderConnectionInfo connection) {
-		return ZoneMinderEventManager.getInstance().validateConnection(connection);
+		return HttpSessionCore.validateConnection(connection);
 	}
 
-	
+
 	public static boolean validateLogin(IZoneMinderConnectionInfo connection) throws IllegalArgumentException, IOException, ZoneMinderUrlNotFoundException, ZoneMinderApiNotEnabledException  {
 		
 		return ZoneMinderEventManager.getInstance().validateLogin(connection);
@@ -196,5 +239,6 @@ public class ZoneMinderFactory {
 	public static void UnsubscribeMonitorEvents(String monitorId, IZoneMinderEventSubscriber subscriber) {
 		ZoneMinderEventManager.getInstance().UnsubscribeMonitorEvents(monitorId, subscriber);
 	}
-
+*/
+	
 }

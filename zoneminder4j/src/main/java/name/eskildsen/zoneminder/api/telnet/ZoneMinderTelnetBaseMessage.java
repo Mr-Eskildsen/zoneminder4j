@@ -4,7 +4,7 @@ package name.eskildsen.zoneminder.api.telnet;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import name.eskildsen.zoneminder.internal.TelnetAction;
+import name.eskildsen.zoneminder.event.ZoneMinderEventAction;
 
 
 public abstract class ZoneMinderTelnetBaseMessage {
@@ -19,7 +19,7 @@ public abstract class ZoneMinderTelnetBaseMessage {
     private String[] commandParts;
 
     private String monitorId;
-    private TelnetAction action;
+    private ZoneMinderEventAction action;
     protected Integer timeout = null;
 
 
@@ -29,7 +29,7 @@ public abstract class ZoneMinderTelnetBaseMessage {
         parseCommand(commandParts);
     }
 
-    protected ZoneMinderTelnetBaseMessage(TelnetAction action, String monitorId, Integer timeout) {
+    protected ZoneMinderTelnetBaseMessage(ZoneMinderEventAction action, String monitorId, Integer timeout) {
         this.monitorId = monitorId;
         this.action = action;
         this.timeout = timeout;
@@ -43,12 +43,12 @@ public abstract class ZoneMinderTelnetBaseMessage {
         return monitorId;
     }
 
-    protected TelnetAction getAction() {
+    protected ZoneMinderEventAction getAction() {
         return action;
     }
 
 	public Boolean getState() {
-		if (getAction()==TelnetAction.ON) {
+		if (getAction()==ZoneMinderEventAction.ON) {
 			return true;
 		}
 		return false;
@@ -61,7 +61,7 @@ public abstract class ZoneMinderTelnetBaseMessage {
         String[] actionTimeoutParts = commandParts[IDX_ACTION_AND_TIMEOUT].split(Pattern.quote("+"));
 
         monitorId = commandParts[IDX_MONITORID];
-        action = TelnetAction.getEnum(actionTimeoutParts[0]);
+        action = ZoneMinderEventAction.getEnum(actionTimeoutParts[0]);
 
         if (actionTimeoutParts.length > 1) {
             timeout = Integer.parseInt(actionTimeoutParts[1]);

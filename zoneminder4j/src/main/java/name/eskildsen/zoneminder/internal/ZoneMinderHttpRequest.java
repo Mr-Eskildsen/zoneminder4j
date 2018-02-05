@@ -1,5 +1,7 @@
 package name.eskildsen.zoneminder.internal;
 
-public enum HttpRequest {
+//TODO Deprecated???
+@Deprecated
+public enum ZoneMinderHttpRequest {
 	POST, PUT;
 }

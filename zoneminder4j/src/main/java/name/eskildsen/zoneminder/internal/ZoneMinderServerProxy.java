@@ -4,6 +4,7 @@ package name.eskildsen.zoneminder.internal;
 import java.awt.image.BufferedImageOp;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
@@ -16,47 +17,43 @@ import com.google.gson.JsonObject;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-import name.eskildsen.zoneminder.IZoneMinderConnectionInfo;
 import name.eskildsen.zoneminder.IZoneMinderDaemonStatus;
 import name.eskildsen.zoneminder.IZoneMinderDiskUsage;
 import name.eskildsen.zoneminder.IZoneMinderHostLoad;
 import name.eskildsen.zoneminder.IZoneMinderHostVersion;
-import name.eskildsen.zoneminder.IZoneMinderMonitorData;
+import name.eskildsen.zoneminder.IMonitorDataGeneral;
+import name.eskildsen.zoneminder.IZoneMinderConnectionHandler;
 import name.eskildsen.zoneminder.IZoneMinderServer;
-import name.eskildsen.zoneminder.IZoneMinderSession;
+import name.eskildsen.zoneminder.IZoneMinderHttpSession;
 
 import name.eskildsen.zoneminder.api.ZoneMinderDiskUsage;
-import name.eskildsen.zoneminder.api.ZoneMinderResponseData;
+import name.eskildsen.zoneminder.api.ZoneMinderCoreData;
 import name.eskildsen.zoneminder.api.config.ZoneMinderConfig;
 import name.eskildsen.zoneminder.api.config.ZoneMinderConfigEnum;
-import name.eskildsen.zoneminder.api.daemon.ZoneMinderDaemonStatus;
-import name.eskildsen.zoneminder.api.daemon.ZoneMinderDaemonType;
 import name.eskildsen.zoneminder.api.daemon.ZoneMinderHostDaemonStatus;
+import name.eskildsen.zoneminder.api.daemon.ZoneMinderMonitorDaemonStatus;
 import name.eskildsen.zoneminder.api.host.ZoneMinderHostLoad;
 import name.eskildsen.zoneminder.api.host.ZoneMinderHostVersion;
 import name.eskildsen.zoneminder.api.monitor.ZoneMinderMonitorData;
+import name.eskildsen.zoneminder.exception.ZoneMinderAuthenticationException;
+import name.eskildsen.zoneminder.exception.ZoneMinderGeneralException;
+import name.eskildsen.zoneminder.exception.ZoneMinderInvalidData;
 import name.eskildsen.zoneminder.exception.ZoneMinderUrlNotFoundException;
-import name.eskildsen.zoneminder.trigger.ZoneMinderEventNotifier;
+import name.eskildsen.zoneminder.exception.http.ZoneMinderResponseException;
 
 public class ZoneMinderServerProxy  extends ZoneMinderGenericProxy implements IZoneMinderServer {
-
-	public ZoneMinderServerProxy(IZoneMinderSession session) {
-		super(session);
+	
+	public ZoneMinderServerProxy(IZoneMinderConnectionHandler connection) {
+		super(connection);
 	}
 
 
 	public boolean isConnected()
 	{
-		boolean _connected =  false;
-		ZoneMinderSession session = null;
-		try {
-			session = aquireSession();
-		} catch (FailedLoginException | IOException | ZoneMinderUrlNotFoundException e) {
+		if (getConnection()==null)
 			return false;
-		}
-		_connected = session.isConnectedHttp();
-		releaseSession(session);
-		return _connected;
+		
+		return getConnection().isConnected();
 
 	}
 
@@ -86,8 +83,14 @@ public class ZoneMinderServerProxy  extends ZoneMinderGenericProxy implements IZ
 		return true;
 	}
 
+	@Override
+	public ZoneMinderConfig getConfig(ZoneMinderConfigEnum configEnum) throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderResponseException, ZoneMinderInvalidData {
+		ZoneMinderContentResponse response = null;
+		//TODO Hardcoded value
+        response = getConnection().getPageContent(buildUriApi( replaceParameter(ZoneMinderServerConstants.SUBPATH_API_SERVER_GET_CONFIG_JSON, "ConfigId", configEnum.name())));
+        return ZoneMinderCoreData.createFromJson(response.getContentAsJsonObject().getAsJsonObject("config").getAsJsonObject("Config"),response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderConfig.class);
 
-	
+	}
 
 	/** *****************************************************
 	 * 
@@ -95,26 +98,35 @@ public class ZoneMinderServerProxy  extends ZoneMinderGenericProxy implements IZ
 	 * @throws IOException 
 	 * @throws ZoneMinderUrlNotFoundException 
 	 * @throws FailedLoginException 
+	 * @throws ZoneMinderGeneralException 
+	 * @throws ZoneMinderResponseException 
+	 * @throws ZoneMinderInvalidData 
+	 * @throws ZoneMinderAuthenticationException 
 	 * 
 	 ***************************************************** */
 
-	protected IZoneMinderDiskUsage getDiskUsage(String id) throws FailedLoginException, ZoneMinderUrlNotFoundException, IOException {
+	protected IZoneMinderDiskUsage getDiskUsage(String id) throws ZoneMinderUrlNotFoundException, IOException, ZoneMinderGeneralException, ZoneMinderResponseException, ZoneMinderInvalidData, ZoneMinderAuthenticationException {
 
 		JsonObject jsonObject = null;
 
-		jsonObject = getAsJson(ZoneMinderServerConstants.SUBPATH_API_HOST_DISKPERCENT_JSON).get("usage")
-				.getAsJsonObject();
-
+		ZoneMinderContentResponse response = null;
+		//TODO Hardcoded value
+        response = getConnection().getPageContent(buildUriApi( ZoneMinderServerConstants.SUBPATH_API_HOST_DISKPERCENT_JSON ));
+      //TODO Hardcoded value
+        jsonObject = response.getContentAsJsonObject().get("usage").getAsJsonObject();
+       
+		
 		Set<Map.Entry<String, JsonElement>> entries = jsonObject.entrySet();
 		for (Map.Entry<String, JsonElement> entry : entries) {
 			if (entry.getKey().equalsIgnoreCase(id)) {
 				JsonObject object = (JsonObject) entry.getValue();
-				return (IZoneMinderDiskUsage)convertToClass(object, ZoneMinderDiskUsage.class);
+				return ZoneMinderCoreData.createFromJson(jsonObject, response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderDiskUsage.class);
 			}
 		}
 
 		//Just return response codes from call
-		return (IZoneMinderDiskUsage)convertToClass(null, ZoneMinderDiskUsage.class);
+		return ZoneMinderCoreData.createFromJson(null, response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderDiskUsage.class);
+		//return (IZoneMinderDiskUsage)convertToClass(null, ZoneMinderDiskUsage.class);
 
 	}
 	
@@ -133,15 +145,16 @@ public class ZoneMinderServerProxy  extends ZoneMinderGenericProxy implements IZ
 	 * @return Return object of type {@see ZoneMinderHostVersion} 
 	 * @throws IOException 
 	 * @throws ZoneMinderUrlNotFoundException 
-	 * @throws FailedLoginException 
+	 * @throws ZoneMinderGeneralException 
+	 * @throws ZoneMinderResponseException 
+	 * @throws ZoneMinderInvalidData 
+	 * @throws ZoneMinderAuthenticationException 
 	 */
-	public IZoneMinderHostVersion getHostVersion() throws FailedLoginException, ZoneMinderUrlNotFoundException, IOException 
+	public IZoneMinderHostVersion getHostVersion() throws ZoneMinderUrlNotFoundException, IOException, ZoneMinderGeneralException, ZoneMinderResponseException, ZoneMinderInvalidData, ZoneMinderAuthenticationException 
 	{
-		JsonObject jsonObject = null;
-		jsonObject = getAsJson(ZoneMinderServerConstants.SUBPATH_API_HOST_VERSION_JSON);
-		return (IZoneMinderHostVersion)convertToClass(jsonObject, ZoneMinderHostVersion.class);
-
-
+		ZoneMinderContentResponse response = null;
+        response = getConnection().getPageContent(buildUriApi( ZoneMinderServerConstants.SUBPATH_API_HOST_VERSION_JSON));
+        return ZoneMinderCoreData.createFromJson(response.getContentAsJsonObject(),response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderHostVersion.class);
 	}
 
 
@@ -152,40 +165,43 @@ public class ZoneMinderServerProxy  extends ZoneMinderGenericProxy implements IZ
 	 * @return Return object of type {@see ZoneMinderHostCpuLoad} 
 	 * @throws IOException 
 	 * @throws ZoneMinderUrlNotFoundException 
-	 * @throws FailedLoginException 
+	 * @throws ZoneMinderGeneralException 
+	 * @throws ZoneMinderResponseException 
+	 * @throws ZoneMinderInvalidData 
+	 * @throws ZoneMinderAuthenticationException 
 	 */
-	public IZoneMinderHostLoad getHostCpuLoad() throws FailedLoginException, ZoneMinderUrlNotFoundException, IOException 
+	public IZoneMinderHostLoad getHostCpuLoad() throws ZoneMinderUrlNotFoundException, IOException, ZoneMinderGeneralException, ZoneMinderResponseException, ZoneMinderInvalidData, ZoneMinderAuthenticationException 
 	{
-		JsonObject jsonObject = null;
-
-		jsonObject = getAsJson(ZoneMinderServerConstants.SUBPATH_API_HOST_CPULOAD_JSON);
-		return (IZoneMinderHostLoad)convertToClass(jsonObject, ZoneMinderHostLoad.class);
+		ZoneMinderContentResponse response = null;
+        response = getConnection().getPageContent(buildUriApi( ZoneMinderServerConstants.SUBPATH_API_HOST_CPULOAD_JSON ));
+        return ZoneMinderCoreData.createFromJson(response.getContentAsJsonObject(),response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderHostLoad.class);
 	}
 
-	public  IZoneMinderDaemonStatus getHostDaemonCheckState()  {
+	public  boolean isDaemonRunning()  { 
 
-		ZoneMinderHostDaemonStatus daemonState = null;
 		try {
-			JsonObject jsonObject = getAsJson(ZoneMinderServerConstants.SUBPATH_API_HOST_DAEMON_CHECKSTATE);
-			//Integer curState = getAsJson(ZoneMinderServerConstants.SUBPATH_API_HOST_DAEMON_CHECKSTATE).get("result").getAsInt();
-			/* TODO:: GSON CRAPx½
-			daemonState = (ZoneMinderHostDaemonStatus) ZoneMinderDaemonStatus.Create(ZoneMinderDaemonType.DAEMON_HOST, curState, null);
-			daemonState.setHttpResponseCode(getHttpResponseCode());
-			daemonState.setHttpResponseMessage(getHttpResponseMessage());
-			*/
-			daemonState = ZoneMinderResponseData.createFromJson(jsonObject, ZoneMinderHostDaemonStatus.class);
-			daemonState.setHttpResponseCode(getHttpResponseCode());
-			daemonState.setHttpResponseMessage(getHttpResponseMessage());
-
+			IZoneMinderDaemonStatus daemonStatus = getHostDaemonCheckState();
+			if (daemonStatus!=null) {
+				return daemonStatus.getStatus();
+			}
+		} catch(Exception ex) {
+			//Intentionally left blank
 		}
-		catch (FailedLoginException | ZoneMinderUrlNotFoundException | IOException e) {
-		}
-
-
-		return (IZoneMinderDaemonStatus)daemonState;
+		return false;
+	}
+		
+	public  IZoneMinderDaemonStatus getHostDaemonCheckState() throws ZoneMinderGeneralException, ZoneMinderResponseException, ZoneMinderInvalidData, ZoneMinderAuthenticationException  {
+        ZoneMinderContentResponse response = null;
+        try {
+        	response = getConnection().getPageContent(buildUriApi( ZoneMinderServerConstants.SUBPATH_API_HOST_DAEMON_CHECKSTATE ));
+            return ZoneMinderCoreData.createFromJson(response.getContentAsJsonObject(),response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderHostDaemonStatus.class);
+            
+        } catch (IOException e) {
+        	return null;
+        }
 	}
 
-	public IZoneMinderDiskUsage getHostDiskUsage() throws FailedLoginException, ZoneMinderUrlNotFoundException, IOException {
+	public IZoneMinderDiskUsage getHostDiskUsage() throws ZoneMinderUrlNotFoundException, IOException, ZoneMinderGeneralException, ZoneMinderResponseException, ZoneMinderInvalidData, ZoneMinderAuthenticationException {
 
 		return getDiskUsage("Total");
 	}
@@ -195,48 +211,28 @@ public class ZoneMinderServerProxy  extends ZoneMinderGenericProxy implements IZ
 	/** *****************************************************
 	 * 
 	 * Monitor API
+	 * @throws ZoneMinderGeneralException 
+	 * @throws ZoneMinderResponseException 
+	 * @throws ZoneMinderInvalidData 
+	 * @throws ZoneMinderAuthenticationException 
 	 ***************************************************** */
 
-	public ArrayList<IZoneMinderMonitorData> getMonitors()  {
-
-		JsonObject jsonObject = null;
+	public ArrayList<IMonitorDataGeneral> getMonitors() throws ZoneMinderGeneralException, ZoneMinderResponseException, ZoneMinderInvalidData, ZoneMinderAuthenticationException  {
+        ZoneMinderContentResponse response = null;
+        ArrayList<IMonitorDataGeneral> arrMonitor = new ArrayList<IMonitorDataGeneral>();
 		try {
-			jsonObject = getAsJson(ZoneMinderServerConstants.SUBPATH_API_MONITORS_JSON);
-		}
-		catch(FailedLoginException e) {
-			jsonObject = null;
-		} catch(ZoneMinderUrlNotFoundException e) {
-			jsonObject = null;	
-		} catch(IOException e)
-		{
-			jsonObject = null;
-		}
-
-
-		if (jsonObject == null) {
-			return null;
-		}
-
-
-		JsonArray arrMonitorJson = jsonObject.getAsJsonArray("monitors");
-		ArrayList<IZoneMinderMonitorData> arrMonitor = new ArrayList<IZoneMinderMonitorData>();
-		for (JsonElement cur : arrMonitorJson) {
-
-
-			ZoneMinderMonitorData monitorData = ZoneMinderResponseData.createFromJson(((JsonObject)cur).getAsJsonObject("Monitor"), ZoneMinderMonitorData.class);
-			arrMonitor.add(monitorData);
-			//arrMonitor.add(gson.fromJson(((JsonObject)cur).getAsJsonObject("Monitor"), ZoneMinderMonitorData.class));
-			//arrMonitor.add(ZoneMinderMonitorData.fromJson(((JsonObject)cur).getAsJsonObject("Monitor")));
-			
-		}
+        	response = getConnection().getPageContent(buildUriApi( ZoneMinderServerConstants.SUBPATH_API_MONITORS_JSON ));
+        	JsonArray arrMonitorJson = response.getContentAsJsonObject().getAsJsonArray("monitors");	
+        	for (JsonElement cur : arrMonitorJson) {
+    			//TODO Fix Hardcoded Object Id
+    			ZoneMinderMonitorData monitorData = ZoneMinderCoreData.createFromJson(((JsonObject)cur).getAsJsonObject("Monitor"), response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderMonitorData.class);
+    			arrMonitor.add(monitorData);
+    		}
+        } catch (IOException e) {
+        	return null;
+        }
 		return arrMonitor;
 	}
-
-
-
-
-
-	
 
 
 }

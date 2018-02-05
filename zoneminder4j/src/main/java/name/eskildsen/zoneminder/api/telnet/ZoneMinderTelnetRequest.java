@@ -3,7 +3,7 @@ package name.eskildsen.zoneminder.api.telnet;
 import java.util.Arrays;
 import java.util.List;
 
-import name.eskildsen.zoneminder.internal.TelnetAction;
+import name.eskildsen.zoneminder.event.ZoneMinderEventAction;
 
 
 public class ZoneMinderTelnetRequest extends ZoneMinderTelnetBaseMessage {
@@ -27,7 +27,7 @@ public class ZoneMinderTelnetRequest extends ZoneMinderTelnetBaseMessage {
         super(command);
     }
 
-    public ZoneMinderTelnetRequest(TelnetAction action, String monitorId, Integer priority, String reason,
+    public ZoneMinderTelnetRequest(ZoneMinderEventAction action, String monitorId, Integer priority, String reason,
             String note, String showText, Integer timeout) {
         super(action, monitorId, timeout);
         this.priority = priority;

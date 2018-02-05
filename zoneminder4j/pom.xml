@@ -4,7 +4,7 @@
 	<groupId>name.eskildsen.zoneminder</groupId>
 	<artifactId>zoneminder4j</artifactId>
 	<packaging>jar</packaging>
-	<version>0.9.4</version>
+	<version>0.9.5</version>
 	<name>zoneminder4j</name>
 	<url>http://maven.apache.org</url>
 
@@ -22,7 +22,6 @@
             <artifactId>javax.ws.rs-api</artifactId>
             <version>2.0.1</version>
         </dependency>
-
      <dependency>
             <groupId>org.glassfish.jersey.core</groupId>
             <artifactId>jersey-common</artifactId>
@@ -44,6 +43,18 @@
 	        <version>1.10.1</version>
 	    </dependency>
 
+		<!-- https://mvnrepository.com/artifact/org.eclipse.jetty/jetty-http -->
+		<dependency>
+			<groupId>org.eclipse.jetty</groupId>
+			<artifactId>jetty-http</artifactId>
+			<version>9.4.8.v20171121</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.eclipse.jetty/jetty-client -->
+		<dependency>
+			<groupId>org.eclipse.jetty</groupId>
+			<artifactId>jetty-client</artifactId>
+			<version>9.4.8.v20171121</version>
+		</dependency>
     </dependencies>
 
     <build>

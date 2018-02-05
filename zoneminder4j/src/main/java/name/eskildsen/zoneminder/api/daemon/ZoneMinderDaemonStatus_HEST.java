@@ -3,9 +3,9 @@ package name.eskildsen.zoneminder.api.daemon;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-import name.eskildsen.zoneminder.api.ZoneMinderResponseData;
+import name.eskildsen.zoneminder.api.ZoneMinderCoreData;
 
-public abstract class ZoneMinderDaemonStatus extends ZoneMinderResponseData {
+public abstract class ZoneMinderDaemonStatus_HEST extends ZoneMinderCoreData {
 
 	
 	

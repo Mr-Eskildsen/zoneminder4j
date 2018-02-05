@@ -1,14 +1,14 @@
 package name.eskildsen.zoneminder.api.host;
 
 import name.eskildsen.zoneminder.IZoneMinderHostVersion;
-import name.eskildsen.zoneminder.api.ZoneMinderResponseData;
+import name.eskildsen.zoneminder.api.ZoneMinderCoreData;
 
 import javax.annotation.Generated;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 
-public class ZoneMinderHostVersion extends ZoneMinderResponseData implements IZoneMinderHostVersion {
+public class ZoneMinderHostVersion extends ZoneMinderCoreData implements IZoneMinderHostVersion {
 
 	@SerializedName("version")
 	@Expose

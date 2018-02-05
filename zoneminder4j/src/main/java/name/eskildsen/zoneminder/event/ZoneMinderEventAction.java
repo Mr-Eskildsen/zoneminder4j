@@ -6,15 +6,15 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package name.eskildsen.zoneminder.internal;
+package name.eskildsen.zoneminder.event;
 
-public enum TelnetAction {
+public enum ZoneMinderEventAction {
     ON("on"),
     OFF("off");
 
     private final String fieldDescription;
 
-    private TelnetAction(String value) {
+    private ZoneMinderEventAction(String value) {
         fieldDescription = value;
     }
 
@@ -23,7 +23,7 @@ public enum TelnetAction {
         return fieldDescription;
     }
 
-    public static TelnetAction getEnum(String value) {
-        return TelnetAction.valueOf(value.toUpperCase());
+    public static ZoneMinderEventAction getEnum(String value) {
+        return ZoneMinderEventAction.valueOf(value.toUpperCase());
     }
 }

@@ -11,7 +11,7 @@ package name.eskildsen.zoneminder.api.telnet;
 import java.util.Arrays;
 import java.util.List;
 
-import name.eskildsen.zoneminder.internal.TelnetAction;
+import name.eskildsen.zoneminder.event.ZoneMinderEventAction;
 
 
 public class ZoneMinderTriggerEvent extends ZoneMinderTelnetBaseMessage {

@@ -1,9 +1,13 @@
 package name.eskildsen.zoneminder;
 
-public interface IZoneMinderResponse {
+import java.net.URI;
 
-	String getHttpUrl();
-	int getHttpResponseCode();
+public interface IZoneMinderResponse {
+	
+	URI getHttpRequestURI();
+	String getHttpRequestUrl();
+	int getHttpStatus();
+	
     String getHttpResponseMessage();
 
 }

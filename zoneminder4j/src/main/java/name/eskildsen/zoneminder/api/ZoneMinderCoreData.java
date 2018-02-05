@@ -3,11 +3,14 @@ package name.eskildsen.zoneminder.api;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
+//TODO - Remove reference 
 import javax.ws.rs.NotSupportedException;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
@@ -16,42 +19,141 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.annotations.SerializedName;
 
 import name.eskildsen.zoneminder.IZoneMinderResponse;
+import name.eskildsen.zoneminder.api.config.ZoneMinderConfig;
 import name.eskildsen.zoneminder.api.monitor.ZoneMinderMonitorData;
+import name.eskildsen.zoneminder.exception.ZoneMinderInvalidData;
+import name.eskildsen.zoneminder.internal.ZoneMinderContentResponse;
 
-public abstract class ZoneMinderResponseData implements IZoneMinderResponse {
+public abstract class ZoneMinderCoreData implements IZoneMinderResponse {
 
-	private String url = "";
+	private URI requestURI = null;
 	private int responseCode = 0;
 	private String responseMessage = "";
 
-	protected ZoneMinderResponseData()
+	protected ZoneMinderCoreData()
 	{
 	}
 	
-	protected ZoneMinderResponseData(int responseCode, String responseMessage, String requestUrl)
+	protected ZoneMinderCoreData(int status, String message, URI uri)
+	{
+		requestURI = uri;
+		responseCode = status;
+		responseMessage = message;
+	}
+	
+	/*
+	protected ZoneMinderCoreData(int responseCode, String responseMessage, URI requestURI)
 	{
 		this.responseCode = responseCode;
 		this.responseMessage= responseMessage;
-		this.url = requestUrl;
+		this.requestURI = requestURI;
+		
+	}
+	*/
+	
+	protected void create(JsonObject jsonObject) throws ZoneMinderInvalidData {
+		if (jsonObject!=null) {
+			loadJsonData(jsonObject);
+		}
+	}
+	
+	
+	protected void setRequestURI(URI uri) {
+		this.requestURI = uri;
 		
 	}
 	
-	public static <T> T createFromJson(JsonObject jsonObject, Class<T> classOfType)
+	protected void setResponseMessage(String message) {
+		this.responseMessage= message;
+	}
+	
+	public void setResponseStatus(int status) {
+		this.responseCode = status;
+	}
+
+	
+	
+	@Override
+	public int getHttpStatus() {return responseCode;}
+	
+	//public void setHttpResponseCode(int rc) {responseCode = rc;}
+
+	@Override
+	public String  getHttpResponseMessage() {return responseMessage;}
+
+
+	@Override
+	public String getHttpRequestUrl() {
+		return requestURI.toString();
+	}
+	
+	@Override
+	public URI getHttpRequestURI() {
+		return requestURI;
+	}
+
+	/*
+	public static <T extends ZoneMinderCoreData> T createFromResponse(ZoneMinderContentResponse response, Class<T> classOfType) throws ZoneMinderInvalidData {
+	
+		T data = null;
+
+		try {
+			data = classOfType.newInstance();
+			
+			data.setResponseStatus(response.getHttpStatus());
+			data.setResponseMessage(response.getHttpResponseMessage());
+			data.setRequestURI(response.getHttpURI());
+			
+			
+			if (ZoneMinderCoreData.class.isAssignableFrom(data.getClass())) {
+				data.create(jsonObject);
+			}
+			
+		} catch (InstantiationException | IllegalAccessException ex) {
+			throw new ZoneMinderInvalidData("Error occurred when laoding JSON data in class", jsonObject.toString(), ex);
+		}
+		return data;	
+	}
+	*/
+	public static <T extends ZoneMinderCoreData> T createFromJson(JsonObject jsonObject, int httpStatus , String httpMessage, URI requestUri, Class<T> classOfType) throws ZoneMinderInvalidData {
+		T data = null;
+
+		try {
+			data = classOfType.newInstance();
+			
+			data.setResponseStatus(httpStatus);
+			data.setResponseMessage(httpMessage);
+			data.setRequestURI(requestUri);
+			
+			
+			if (ZoneMinderCoreData.class.isAssignableFrom(data.getClass())) {
+				data.create(jsonObject);
+			}
+			
+		} catch (InstantiationException | IllegalAccessException ex) {
+			throw new ZoneMinderInvalidData("Error occurred when laoding JSON data in class", jsonObject.toString(), ex);
+		}
+		return data;
+	}
+
+	
+	@Deprecated
+	public static <T> T createFromJson_OLD(JsonObject jsonObject, Class<T> classOfType)
 	{
-		ZoneMinderResponseData zmrd = null;
+		ZoneMinderCoreData zmrd = null;
 		T data = null;
 		try {
 			data = classOfType.newInstance();
 			
-			if (ZoneMinderResponseData.class.isAssignableFrom(data.getClass())) {
+			if (ZoneMinderCoreData.class.isAssignableFrom(data.getClass())) {
 
-				zmrd = (ZoneMinderResponseData)data;
+				zmrd = (ZoneMinderCoreData)data;
 				zmrd.loadJsonData(jsonObject);
 			}
 
 		} catch (InstantiationException | IllegalAccessException e) {
 			// TODO Auto-generated catch block
-			//TODO:: FIX THIS
+			//TODO FIX THIS
 			e.printStackTrace();
 		}
 		return data;
@@ -164,15 +266,7 @@ public abstract class ZoneMinderResponseData implements IZoneMinderResponse {
 		}
 
 	}
-	
-	public String getHttpUrl() {return url;}
-	public void setHttpUrl(String url) {this.url = url;}
 
-	public int getHttpResponseCode() {return responseCode;}
-	public void setHttpResponseCode(int rc) {responseCode = rc;}
-
-	public String  getHttpResponseMessage() {return responseMessage;}
-	public void setHttpResponseMessage(String  rm) {responseMessage = rm;}
 
 	public String getKey() {
 		return this.getClass().getSimpleName();

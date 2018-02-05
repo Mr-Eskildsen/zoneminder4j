@@ -1,5 +1,6 @@
 package name.eskildsen.zoneminder.api;
 
+import java.net.URI;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
@@ -10,9 +11,12 @@ import com.google.gson.annotations.SerializedName;
 
 import name.eskildsen.zoneminder.IZoneMinderDiskUsage;
 import name.eskildsen.zoneminder.annotation.ZoneMinderJson;
+/*
+ * 
+{"usage":{"Baghave":{"space":"1.8429298400879","color":"red"},"Indkoersel":{"space":"13.142463684082","color":"red"},"Terrace":{"space":"0.41262435913086","color":"red"},"Total":{"space":"23.315731048584","color":"#F7464A"}}}
+ */
 
-
-public class ZoneMinderDiskUsage extends ZoneMinderResponseData implements IZoneMinderDiskUsage {
+public class ZoneMinderDiskUsage extends ZoneMinderCoreData implements IZoneMinderDiskUsage {
 
 	
 	@SerializedName("space")
@@ -31,4 +35,5 @@ public class ZoneMinderDiskUsage extends ZoneMinderResponseData implements IZone
         return df.format(Double.parseDouble(space));
 
     }
+
 }

@@ -2,19 +2,18 @@ package name.eskildsen.zoneminder.api.monitor;
 
 import java.lang.reflect.Field;
 
-import javax.ws.rs.GET;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-import name.eskildsen.zoneminder.IZoneMinderMonitorData;
-import name.eskildsen.zoneminder.api.ZoneMinderResponseData;
+import name.eskildsen.zoneminder.IMonitorDataGeneral;
+import name.eskildsen.zoneminder.api.ZoneMinderCoreData;
 import name.eskildsen.zoneminder.common.ZoneMinderMonitorFunctionEnum;
 import name.eskildsen.zoneminder.common.ZoneMinderMonitorSourceTypeEnum;
 
-public class ZoneMinderMonitorData extends ZoneMinderResponseData implements IZoneMinderMonitorData {
+public class ZoneMinderMonitorData extends ZoneMinderCoreData implements IMonitorDataGeneral {
 
 	@SerializedName("Id")
 	@Expose

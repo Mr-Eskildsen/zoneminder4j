@@ -1,20 +1,15 @@
 package name.eskildsen.zoneminder.internal;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.lang.reflect.Type;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
-import javax.security.auth.login.FailedLoginException;
 import javax.ws.rs.core.UriBuilder;
+
+import org.eclipse.jetty.http.HttpMethod;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -22,22 +17,28 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import name.eskildsen.zoneminder.IZoneMinderConnectionHandler;
 import name.eskildsen.zoneminder.IZoneMinderConnectionInfo;
 import name.eskildsen.zoneminder.IZoneMinderResponse;
-import name.eskildsen.zoneminder.IZoneMinderSession;
+import name.eskildsen.zoneminder.IZoneMinderHttpSession;
 
-import name.eskildsen.zoneminder.api.ZoneMinderResponseData;
+import name.eskildsen.zoneminder.api.ZoneMinderCoreData;
 import name.eskildsen.zoneminder.api.config.ZoneMinderConfig;
 import name.eskildsen.zoneminder.api.config.ZoneMinderConfigEnum;
-import name.eskildsen.zoneminder.api.ZoneMinderDiskUsage;
+import name.eskildsen.zoneminder.exception.ZoneMinderAuthenticationException;
+import name.eskildsen.zoneminder.exception.ZoneMinderGeneralException;
+import name.eskildsen.zoneminder.exception.ZoneMinderInvalidData;
+import name.eskildsen.zoneminder.exception.ZoneMinderStreamConfigException;
 import name.eskildsen.zoneminder.exception.ZoneMinderUrlNotFoundException;
-import name.eskildsen.zoneminder.trigger.ZoneMinderEventNotifier;
+import name.eskildsen.zoneminder.exception.http.ZoneMinderResponseException;
+import name.eskildsen.zoneminder.jetty.HttpCore;
+import name.eskildsen.zoneminder.jetty.JettyQueryParameter;
 
 
-//TODO:: THIS IS IN USE CLEAN UP !!!
+//TODO THIS IS IN USE CLEAN UP !!!
 
 
-public class ZoneMinderGenericProxy implements IZoneMinderResponse {
+public abstract class ZoneMinderGenericProxy extends HttpCore /*implements IZoneMinderResponse*/ {
 
 
 	protected static final String QUERY_CURRENTPAGE = "page={currentPage}";
@@ -48,6 +49,7 @@ public class ZoneMinderGenericProxy implements IZoneMinderResponse {
     protected static final String DAEMON_NAME_FRAME = "zmf";
 
 	protected JsonParser parser = new JsonParser();
+	//TODO Reenable Gson
     //private Gson gson = new Gson();
 
 	private String _id = "";
@@ -57,17 +59,34 @@ public class ZoneMinderGenericProxy implements IZoneMinderResponse {
 	private String responseMessage = "";
 
 	private String zmsnphPath = "";
-	private ZoneMinderSession  _session = null;
+
+	//@Deprecated
+	//private IZoneMinderHttpSessionInternal  _session = null;
 	
+	private IZoneMinderConnectionHandler _connection = null;
+	/*
+	@Deprecated
 	public ZoneMinderGenericProxy(HttpSessionCore httpSessionCore, boolean useCore) {
-		_session = (ZoneMinderSession)httpSessionCore;
+		_session = (IZoneMinderHttpSessionInternal)httpSessionCore;
+		this._connection = _session.getConnectionInfo(); 
+		//if (this._connection.getClass().isAssignableFrom(JettyConnectionHandler))
 	}
 	
-	public ZoneMinderGenericProxy(IZoneMinderSession session) {
-		_session = (ZoneMinderSession)session;
+	@Deprecated
+	public ZoneMinderGenericProxy(IZoneMinderHttpSession session) {
+		_session = (IZoneMinderHttpSessionInternal)session;
+		this._connection = _session.getConnectionInfo();
+	}
+*/
+	public ZoneMinderGenericProxy(IZoneMinderConnectionHandler connection) {
+		this._connection = connection;
 	
 	}
+
 	
+	protected IZoneMinderConnectionHandler getConnection() {
+		return _connection;
+	}
 	protected String getId()
 	{
 		return _id;
@@ -78,69 +97,95 @@ public class ZoneMinderGenericProxy implements IZoneMinderResponse {
 		_id = id;
 	}
 
-	
-	protected IZoneMinderSession getSession() {
-		return _session;
-	}
 
+    protected URI buildUriApi(String path) throws MalformedURLException {
+    	return buildURI(getConnection().getApiUri(), path);
+    }
 
-	protected void releaseSession(ZoneMinderSession session) {
+    protected URI buildUriZmsNph(String path) throws MalformedURLException {
+    	return buildURI(getConnection().getZmsNphUri(), path);
+    }
+
+    
+    protected ZoneMinderContentResponse get(SiteTypeEnum site, String methodPath, List<JettyQueryParameter> parameters) throws  ZoneMinderUrlNotFoundException, IOException, ZoneMinderGeneralException, ZoneMinderResponseException {
+    	URI uri = null;
+    	
+    	switch(site) {
+    	case Portal:
+    		uri = buildURI(getConnection().getPortalUri(), methodPath);
+    		break;
+    	case API:
+    		uri = buildUriApi(methodPath);
+    		break;
+    	case CgiBin:
+    		uri = buildUriZmsNph(methodPath);
+    		break;
+    	default:
+    		//TODO Better EXCEPTION
+    		throw new ZoneMinderGeneralException("No valid ZoneMinder Site given", null); 
+        }
+    	
+    	return  getConnection().fetchContentResponse(uri, HttpMethod.GET, parameters);
+    }
+
+    public boolean isConnected()
+    {
+    	return getConnection().isConnected();
+    }
+
+    
+
+    /*
+    protected URI buildZmsNphURI() throws MalformedURLException, ZoneMinderGeneralException, ZoneMinderResponseException
+    {
+    	return buildZmsNphURI(null);
+    }
+    */
+    
+
+    /////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////
+	/*
+	protected void releaseSession(IZoneMinderHttpSessionInternal session) {
 		
 		setHttpResponse(session);
 	}
-
-	
-	protected ZoneMinderSession aquireSession() throws FailedLoginException, IOException, ZoneMinderUrlNotFoundException
+*/
+	/*
+	protected IZoneMinderHttpSessionInternal aquireSession() throws IOException, ZoneMinderUrlNotFoundException
 	{
-		if (_session!=null) {
-			return _session;
+//		if (_session!=null) {
+//			return _session;
 		}
-		return null;
+		
+		throw new UnsupportedOperationException("aquireSession is Deprecated");
 	}
-	protected <T> T convertToClass(JsonObject object, Class<T> classOfT){
+*/
+	/*
+	@Deprecated
+	protected <T extends ZoneMinderCoreData> T convertToClass(JsonObject object, Class<T> classOfT) throws ZoneMinderInvalidData{
 		T data = null;
 
-		data = ZoneMinderResponseData.createFromJson(object, classOfT);
+		data = ZoneMinderCoreData.createFromJson(object, classOfT);
 		
 		if (data!=null) {
-			((ZoneMinderResponseData)data).setHttpUrl(getHttpUrl());
-			((ZoneMinderResponseData)data).setHttpResponseCode(getHttpResponseCode());
-			((ZoneMinderResponseData)data).setHttpResponseMessage(getHttpResponseMessage());
+			((ZoneMinderCoreData)data).setHttpUrl(getHttpUrl());
+			((ZoneMinderCoreData)data).setHttpResponseCode(getHttpResponseCode());
+			((ZoneMinderCoreData)data).setHttpResponseMessage(getHttpResponseMessage());
 		}
 
 		return data;
 	}
-	
-	/*
-	protected ZoneMinderResponseData convertToClass1(JsonObject object, Type classType){
-	ZoneMinderResponseData data = gson.fromJson(object, classType);
-	
-	if (data==null) {
-		try {
-			data = (ZoneMinderResponseData)(Class.forName(classType.getTypeName()).newInstance());
-	
-		} catch (InstantiationException | IllegalAccessException |ClassNotFoundException e) {
-			data = null;
-		}
-	}
-	
-	if (data!=null) {
-		data.setHttpUrl(getHttpUrl());
-		data.setHttpResponseCode(getHttpResponseCode());
-		data.setHttpResponseMessage(getHttpResponseMessage());
-	}
-	return data;
-}
 	*/
 
 
-
-    private URI buildApiURI(IZoneMinderConnectionInfo connectionInfo, String methodPath) throws MalformedURLException
+    /*private URI buildApiURI(IZoneMinderConnectionInfo connectionInfo, String methodPath) throws MalformedURLException
     {
 	    return buildApiURI(connectionInfo, methodPath, null);
 	}
 
-    
+
+    @Deprecated
     private URI buildApiURI(IZoneMinderConnectionInfo connectionInfo, String methodPath, String queryString) throws MalformedURLException
     {
     	String s = "";
@@ -148,7 +193,7 @@ public class ZoneMinderGenericProxy implements IZoneMinderResponse {
     	
 	    // Build Path to the required method in the API
 	    UriBuilder uriBuilder= null;
-	    //connectionInfo.getZoneMinderRootUri()).path(ZoneMinderServerConstants.SUBPATH_API)
+
 		uriBuilder = UriBuilder.fromUri(connectionInfo.getZoneMinderApiBaseUri()).path(methodPath);
 
 	    if ((queryString != null) && (queryString != "")) {
@@ -156,14 +201,16 @@ public class ZoneMinderGenericProxy implements IZoneMinderResponse {
     	}
 	    return uriBuilder.build();
 	}
-
-
-    protected URI buildZmsNphURI() throws MalformedURLException
+*/
+    /*
+    protected URI buildZmsNphURI() throws MalformedURLException, ZoneMinderGeneralException, ZoneMinderResponseException
     {
     	return buildZmsNphURI(null);
     }
     
-    protected URI buildZmsNphURI(String queryString) throws MalformedURLException
+    
+    @Deprecated
+    protected URI buildZmsNphURI(String queryString) throws MalformedURLException, ZoneMinderGeneralException, ZoneMinderResponseException
     {
     	String s = "";
     	
@@ -180,8 +227,9 @@ public class ZoneMinderGenericProxy implements IZoneMinderResponse {
     	}
 	    return uriBuilder.build();
 	}
-
-    
+*/
+    //TODO use createQueryParameterListFromString instead
+    @Deprecated
     protected String resolveCommands(String url, String command, String commandValue) {
         String commandKey = "{" + command + "}";
         if (url.contains(commandKey)) {
@@ -190,61 +238,78 @@ public class ZoneMinderGenericProxy implements IZoneMinderResponse {
         return url;
     }
 
+
     
-    	
+    protected List<JettyQueryParameter> createQueryParameterListFromString(String queryString) {
+    	ArrayList<JettyQueryParameter>queryList = new ArrayList<JettyQueryParameter>(); 
+        
+    	//TODO Add something to check for various (any) error
+        String[] parameters = queryString.split("&");
+        for (int idx = 0; idx < parameters.length;idx++) {
+        	String[] kvp = parameters[idx].split("=");
+        	queryList.add(new JettyQueryParameter(kvp[0], kvp[1]));
+        }
+        return queryList;
+    }
+	
 
 		/**
 	     * 
 	     * HTTP Access (Put
 	     * */
-	    protected String sendPut(String methodPath, String postParams) throws Exception {
-	    	ZoneMinderSession session = aquireSession();
+/*	    protected String sendPut(String methodPath, String postParams) throws Exception {
+	    	IZoneMinderHttpSessionInternal session = aquireSession();
 	    	
 	    	String t = String.format("Call to '%s' with params '%s' failed", methodPath, postParams);
 	    	if (session==null){
 	    		throw new NullPointerException(String.format("Call to '%s' with params '%s' failed", methodPath, postParams));
 	    	}
-	    	String result = session.sendRequest(buildApiURI(session.getConnectionInfo(), methodPath), HttpRequest.PUT, postParams);
+	    	String result = session.sendRequest(buildApiURI(session.getConnectionInfo(), methodPath), ZoneMinderHttpRequest.PUT, postParams);
 	    	setHttpResponse(session);
 	    	releaseSession( session );
 
 	    	return result;
 	    }
 	    
-	    
+	*/    
 	    /**
 	     * 
 	     * HTTP Access (Post
 	     * */
 	    
-	    protected String sendPost(String methodPath, String postParams) throws Exception {
-	    	ZoneMinderSession session = aquireSession();
-	    	String result = session.sendRequest(buildApiURI(session.getConnectionInfo(), methodPath), HttpRequest.POST, postParams);
+/*	    protected String sendPost(String methodPath, String postParams) throws Exception {
+	    	IZoneMinderHttpSessionInternal session = aquireSession();
+	    	String result = session.sendRequest(buildApiURI(session.getConnectionInfo(), methodPath), ZoneMinderHttpRequest.POST, postParams);
 	    	setHttpResponse(session);
 	    	releaseSession( session );
 
 	    	return result;
 	    }
 	    
-	    
-	   
-	    protected JsonObject getAsJson(String methodPath) throws FailedLoginException, ZoneMinderUrlNotFoundException, IOException {
+	*/    
+	/*   @Deprecated
+	    protected JsonObject getAsJson(String methodPath) throws ZoneMinderUrlNotFoundException, IOException, ZoneMinderGeneralException, ZoneMinderResponseException {
 	        return getAsJson(methodPath, null);
 	    }
 
-	    protected JsonObject getAsJson(String methodPath, String queryString) throws FailedLoginException, ZoneMinderUrlNotFoundException, IOException {
+	   @Deprecated
+	    protected JsonObject getAsJson(String methodPath, List<JettyQueryParameter> parameters) throws  ZoneMinderUrlNotFoundException, IOException, ZoneMinderGeneralException, ZoneMinderResponseException {
 	    	JsonObject object = null;
-	    	ZoneMinderSession session = null;
+	    	IZoneMinderHttpSessionInternal session = null;
 	    	URI uri = null;
 	    	String result = "";
 	    	try {
 	    		session = aquireSession();
 	    		if (session==null) {
-	    	    	throw new NullPointerException(String.format("Call to '%s' with queryString '%s' failed", methodPath, queryString));
+	    			//TODO Better log
+	    	    	throw new NullPointerException(String.format("Call to '%s' failed", methodPath));
 	    		}
 	    		
-	    		uri = buildApiURI(session.getConnectionInfo(), methodPath, queryString);
-	    		result = session.getDocumentAsString(uri, true);
+	    		//uri = buildApiURI(session.getConnectionInfo(), methodPath, queryString);
+	    		uri = buildApiURI(session.getConnectionInfo(), methodPath);
+	    		//result = session.getDocumentAsString(uri, true);
+	    		result = _connection.getPageContentAsString(uri, parameters);
+	    		
 	    		if (result.equals("")) {
 	    			return null;
 	    		}
@@ -255,7 +320,10 @@ public class ZoneMinderGenericProxy implements IZoneMinderResponse {
 	        catch(IOException  ioe)
 	        {
 	        	throw ioe;
-	        }
+	        } catch (ZoneMinderAuthenticationException e) {
+				// TODO Fix ths Betetr logging
+				e.printStackTrace();
+			}
 	    
     	
     	finally{
@@ -264,10 +332,11 @@ public class ZoneMinderGenericProxy implements IZoneMinderResponse {
 
 	        return object;
 	    }
-
-	    
+*/
+    /*
+	   @Deprecated
 	    private String getAsString(String methodPath) throws Exception {
-	    	ZoneMinderSession session = aquireSession();
+	    	IZoneMinderHttpSessionInternal session = aquireSession();
 	    	try {
 	    		if (session==null) {
 	    	    	throw new NullPointerException(String.format("getAsString(): Call to '%s' failed", methodPath));
@@ -287,7 +356,7 @@ public class ZoneMinderGenericProxy implements IZoneMinderResponse {
 
 	    private String getAsString(String methodPath, String queryString) throws Exception {
 	    	
-	    	ZoneMinderSession session = aquireSession();
+	    	IZoneMinderHttpSessionInternal session = aquireSession();
 	    	try {
 	    		if (session==null) {
 	    	    	throw new NullPointerException(String.format("getAsString(): Call to '%s' with queryString '%s' failed", methodPath, queryString));
@@ -302,17 +371,31 @@ public class ZoneMinderGenericProxy implements IZoneMinderResponse {
 	    	}
     	}
 
-	    protected ByteArrayOutputStream getAsByteArray(URI uri)
+	    
+	    
+	  */  
+	    
+	    
+	    
+	    
+	    
+	    
+	    /*
+	    
+	    protected ByteArrayOutputStream getAsByteArray(URI uri) throws ZoneMinderStreamConfigException, ZoneMinderGeneralException
 	    {
-	    	ZoneMinderSession session = null;
+	    	IZoneMinderHttpSessionInternal session = null;
 			try {
 				session = aquireSession();
 	    		if (session==null) {
 	    	    	throw new NullPointerException(String.format("getAsByteArray(): Call URI='%s' failed", uri.toString()));
 	    		}
     			return session.getAsByteArray(uri, true);
-			} catch (FailedLoginException | IOException | ZoneMinderUrlNotFoundException e) {
-				// 	TODO Auto-generated catch block
+			} catch (IOException | ZoneMinderUrlNotFoundException e) {
+				// 	TODO ERROR HANDLÆING
+				e.printStackTrace();
+			} catch (ZoneMinderAuthenticationException e) {
+				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			finally {
@@ -324,13 +407,21 @@ public class ZoneMinderGenericProxy implements IZoneMinderResponse {
 			return null;
 	    
 	    }
+*/	    
 		
-		@Override
+	/*	@Override
 	    public String getHttpUrl() {
 			return url;
 		}
-
+*/
+	    /*
 		@Override
+		public int getHttpStatus() {
+		
+			return responseCode;
+		}
+		
+		@Deprecated
 		public int getHttpResponseCode() {
 			return responseCode;
 		}
@@ -342,22 +433,25 @@ public class ZoneMinderGenericProxy implements IZoneMinderResponse {
 		}
 
 
-		protected void setHttpResponse(ZoneMinderSession session) {
+		protected void setHttpResponse(IZoneMinderHttpSessionInternal session) {
 			if (session!=null) {
 				url = session.getHttpUrl();
 				responseCode = session.getResponseCode();
 				responseMessage = session.getResponseMessage();
 			}
 		}
-
+*/
 
 		
 		/** *****************************************************
 		 * 
 		 * Config API
+		 * @throws ZoneMinderGeneralException 
+		 * @throws ZoneMinderResponseException 
 		 * 
-		 ***************************************************** */    
-		public ZoneMinderConfig getConfig(ZoneMinderConfigEnum configId) {
+		 ***************************************************** */
+	/*	@Deprecated
+		public ZoneMinderConfig getConfig(ZoneMinderConfigEnum configId) throws ZoneMinderGeneralException, ZoneMinderResponseException {
 
 			ZoneMinderConfig configData = null;
 			JsonObject jsonObject = null;
@@ -367,72 +461,12 @@ public class ZoneMinderGenericProxy implements IZoneMinderResponse {
 			try {
 				jsonObject = getAsJson(resolveCommands(ZoneMinderServerConstants.SUBPATH_API_SERVER_GET_CONFIG_JSON, "ConfigId", configId.name()))
 						.getAsJsonObject("config").getAsJsonObject("Config");
-/*
-				JsonElement element = null;
-				String id = "";
-				String name = "";
-				
-				element = jsonObject.get("Id");
-				id = element.getAsString();
-				
-				element = jsonObject.get("Name");
-				name =element.getAsString();
 
-				element = jsonObject.get("Value");
-				name = element.getAsString();
-
-				
-				element = jsonObject.get("Type");
-				String type = element.getAsString();
-				
-				element = jsonObject.get("DefaultValue");
-				String default_value = element.getAsString();
-				
-				element = jsonObject.get("Hint");
-				String hint = element.getAsString();
-				
-				element = jsonObject.get("Pattern");
-				String pattern = element.getAsString();
-				
-				element = jsonObject.get("Format");
-				String format = element.getAsString();
-				
-				element = jsonObject.get("Prompt");
-				String prompt = element.getAsString();
-				
-				element = jsonObject.get("Help");
-				String help = element.getAsString();
-				
-				element = jsonObject.get("Category");
-				String category = element.getAsString();
-				
-				
-				element = jsonObject.get("Readonly");
-				String read_only = element.getAsString();
-				
-				element = jsonObject.get("Requires");
-				String requires = element.getAsString();
-				
-				configData = gson.fromJson(jsonObject, ZoneMinderConfig.class);
-				
-				configData.setHttpResponseCode(getHttpResponseCode());
-				configData.setHttpResponseMessage(getHttpResponseMessage());
-*/
 				configData = ZoneMinderConfig.fromJson(jsonObject);
 				configData.setHttpResponseCode(getHttpResponseCode());
 				configData.setHttpResponseMessage(getHttpResponseMessage());
-	/*			
 				
-				Gson gsonTemp =
-			            new GsonBuilder()
-			            .registerTypeAdapter(ZoneMinderConfig.class, new AnnotatedDeserializer<ZoneMinderConfig>())
-			            .create();
-
-				ZoneMinderConfig configData1 = gsonTemp.fromJson(jsonObject, ZoneMinderConfig.class);
-				Integer t = 10;
-*/
-				
-			} catch (NullPointerException | FailedLoginException | ZoneMinderUrlNotFoundException | IOException e) {
+			} catch (NullPointerException | ZoneMinderUrlNotFoundException | IOException e) {
 				configData = null;
 			}
 
@@ -442,10 +476,10 @@ public class ZoneMinderGenericProxy implements IZoneMinderResponse {
 
 			return configData;
 		}
-
+*/
+		/*
 		
-		
-		public boolean setConfig(ZoneMinderConfigEnum configId, Boolean newValue) {
+		public boolean setConfig(ZoneMinderConfigEnum configId, Boolean newValue) throws ZoneMinderGeneralException, ZoneMinderResponseException {
 			ZoneMinderConfig config = getConfig(configId);
 			if (config.getDataType().equalsIgnoreCase("boolean")) {
 				if (setConfig(configId, newValue.toString())) {
@@ -458,7 +492,9 @@ public class ZoneMinderGenericProxy implements IZoneMinderResponse {
 			return false;
 		}
 
+		*/
 		
+		/*
 		public boolean setConfig(ZoneMinderConfigEnum configId, String value) {
 			boolean result = false;
 
@@ -474,6 +510,6 @@ public class ZoneMinderGenericProxy implements IZoneMinderResponse {
 			return result;
 		}
 
-
+*/
 
 }

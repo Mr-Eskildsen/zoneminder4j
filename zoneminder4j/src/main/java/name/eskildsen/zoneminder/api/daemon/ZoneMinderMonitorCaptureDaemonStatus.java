@@ -4,8 +4,9 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 import name.eskildsen.zoneminder.IZoneMinderDaemonStatus;
+import name.eskildsen.zoneminder.api.ZoneMinderCoreData;
 
-public class ZoneMinderMonitorCaptureDaemonStatus extends ZoneMinderDaemonStatus implements IZoneMinderDaemonStatus {
+public class ZoneMinderMonitorCaptureDaemonStatus extends ZoneMinderCoreData implements IZoneMinderDaemonStatus {
 	
 	@SerializedName("status")
 	@Expose

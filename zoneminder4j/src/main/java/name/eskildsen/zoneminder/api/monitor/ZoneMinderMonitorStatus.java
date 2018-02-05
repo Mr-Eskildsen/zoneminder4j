@@ -3,10 +3,10 @@ package name.eskildsen.zoneminder.api.monitor;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-import name.eskildsen.zoneminder.api.ZoneMinderResponseData;
+import name.eskildsen.zoneminder.api.ZoneMinderCoreData;
 import name.eskildsen.zoneminder.common.ZoneMinderMonitorStatusEnum;
 
-public class ZoneMinderMonitorStatus extends ZoneMinderResponseData {
+public class ZoneMinderMonitorStatus extends ZoneMinderCoreData {
 
 	@SerializedName("status")
 	@Expose

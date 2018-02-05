@@ -1,4 +1,4 @@
-package name.eskildsen.zoneminder.internal;
+package name.eskildsen.zoneminder.event;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -6,131 +6,111 @@ import java.util.concurrent.TimeUnit;
 
 import javax.security.auth.login.FailedLoginException;
 
+import org.jsoup.Connection;
+
+import name.eskildsen.zoneminder.IZoneMinderConnectionHandler;
 import name.eskildsen.zoneminder.IZoneMinderConnectionInfo;
-import name.eskildsen.zoneminder.IZoneMinderEventManager;
+import name.eskildsen.zoneminder.IZoneMinderEventSession;
 import name.eskildsen.zoneminder.IZoneMinderEventSubscriber;
 import name.eskildsen.zoneminder.api.config.ZoneMinderConfig;
 import name.eskildsen.zoneminder.api.config.ZoneMinderConfigEnum;
-import name.eskildsen.zoneminder.api.exception.ZoneMinderApiNotEnabledException;
-import name.eskildsen.zoneminder.api.exception.ZoneMinderCredentialsMissingException;
+import name.eskildsen.zoneminder.api.telnet.ZoneMinderTelnetRequest;
 import name.eskildsen.zoneminder.api.telnet.ZoneMinderTriggerEvent;
+import name.eskildsen.zoneminder.exception.ZoneMinderApiNotEnabledException;
+import name.eskildsen.zoneminder.exception.ZoneMinderAuthenticationException;
 import name.eskildsen.zoneminder.exception.ZoneMinderUrlNotFoundException;
-import name.eskildsen.zoneminder.trigger.ZoneMinderEventNotifier;
+import name.eskildsen.zoneminder.socket.SocketReader;
+import name.eskildsen.zoneminder.socket.SocketWriter;
 
-public class ZoneMinderEventManager extends ZoneMinderEventNotifier  implements IZoneMinderEventManager {
+public class ZoneMinderEventManager extends ZoneMinderEventNotifier  implements IZoneMinderEventSession {
 
 	//create an object of SingleObject
-	private static ZoneMinderEventManager instance = new ZoneMinderEventManager();
-	private ZoneMinderConnectionInfo connection = null;
-	private boolean _connected = false;
-
+	////private static ZoneMinderEventManager instance = new ZoneMinderEventManager();
+	//private ZoneMinderConnectionInfo _connection = null;
 	
-
-	//make the constructor private so that this class cannot be
-	//instantiated
-	private ZoneMinderEventManager()
+	//private boolean _connected = false;
+	private SocketWriter socketWriter = null;
+	
+	public ZoneMinderEventManager()
 	{
 	}
 	
-	
-	//Get the only interface
-	public static IZoneMinderEventManager getInstance(){
-	   return instance;
+	public ZoneMinderEventManager(IZoneMinderConnectionHandler conn)
+	{
+		initialize(conn);
 	}
-
-	
 	
 	@Override
 	public boolean isConnected() {
-		boolean connected = false;
+		if (tcpListenerRunnable==null)
+			return false;
 		
-		if (connection!=null) {
-			synchronized(connection) {
-				connected = _connected;
-			}
-		}
-		return connected;
+		return tcpListenerRunnable.isConnected();
 	}
 	
-	public boolean validateConnection(IZoneMinderConnectionInfo connection)
+
+	protected boolean initialize(IZoneMinderConnectionHandler conn) 
 	{
-		return verifyTelnetConnection((ZoneMinderConnectionInfo)connection) && verifyHttpConnection((ZoneMinderConnectionInfo)connection);
-		
-	}
-
-
-	protected boolean Initialize(IZoneMinderConnectionInfo conn) throws GeneralSecurityException, IllegalArgumentException, IOException, ZoneMinderUrlNotFoundException {
-		   
+		try {
 			
-			if (verifyHttpConnection((ZoneMinderConnectionInfo)conn) && verifyTelnetConnection((ZoneMinderConnectionInfo)conn))
-			{
-				connection = (ZoneMinderConnectionInfo)conn;
-				setConnected(true);
-		   }
-		   else  {
-			   setConnected(false);
-		   }
-		   
-		   return true;
-	   }
+			if (socketWriter==null) {
+				socketWriter = new SocketWriter(conn.getHostName(), conn.getTelnetPort());
+			}
+			return socketWriter.isConnected();
+		} catch (IllegalArgumentException | IOException e) {
+		}
+		return false;	   }
 	
 	
-	public boolean UpdateConnection(IZoneMinderConnectionInfo connection)
-			throws GeneralSecurityException, IllegalArgumentException, IOException, ZoneMinderUrlNotFoundException {
+	//TODO - Remove this?
+	public boolean UpdateConnection(IZoneMinderConnectionHandler connection)
+	{
+		return initialize(connection);
+	}
+
+	   
+	
+    /** *****************************************************
+     * 
+     * Event Trigger
+     * @throws IOException 
+     * @throws ZoneMinderUrlNotFoundException 
+     * @throws FailedLoginException 
+     * 
+      ***************************************************** */
+	@Override
+	public void activateForceAlarm(String monitorId, Integer priority, String reason,
+            String note, String showText, Integer timeoutSeconds) throws IOException
+	{
+	
+		ZoneMinderTelnetRequest request = new ZoneMinderTelnetRequest(ZoneMinderEventAction.ON, monitorId, priority, reason,
+	            note, showText, timeoutSeconds);
+		socketWriter.write(request.toCommandString());
 		
-		return Initialize(connection);
 	}
 
-	   
-		//TODO Create specific telnet session, because API Exception shouldn't be relevant
-	   protected boolean verifyTelnetConnection(ZoneMinderConnectionInfo connection)   {
-			try {
-				ZoneMinderSession session = new ZoneMinderSession(connection, false, true);
-				   return session.isConnectedTelnet();
-			} catch (FailedLoginException | IllegalArgumentException | IOException | ZoneMinderUrlNotFoundException | ZoneMinderApiNotEnabledException | ZoneMinderCredentialsMissingException e) {
-				return false;
-			}
-
-	   }
-	   
-	   
-	   
-	   protected boolean verifyHttpConnection(ZoneMinderConnectionInfo connection) {
-		   try {
-			   ZoneMinderSession session = new ZoneMinderSession(connection, true, false);
-			   return session.isConnectedHttp();
-			} catch (FailedLoginException | IllegalArgumentException | IOException | ZoneMinderUrlNotFoundException | ZoneMinderApiNotEnabledException | ZoneMinderCredentialsMissingException e) {
-				return false;
-			}
-
-	   }
-	   
+	@Override
+	public void deactivateForceAlarm(String monitorId) throws IOException
+	{
+		ZoneMinderTelnetRequest request = new ZoneMinderTelnetRequest(ZoneMinderEventAction.OFF, monitorId, 255, "",
+	            "", "", 0);
+		if (socketWriter==null) {
+			throw new IOException("Write to socket failed. Socket connection not initialised");
+		}
+		socketWriter.write(request.toCommandString());
+	}
 	
-   
-	   public void setConnected(boolean newState) {
-		   if (connection==null) {
-			   _connected = false;
-			   return;
-		   }
-		   
-		   synchronized(connection) {
-			   _connected = newState;
-		   }
-	}
-	   
-
-		private Thread tcpListener = null;
-		private TCPListener tcpListenerRunnable = null;
-		private static final int TELNET_TIMEOUT = 1000;
+	
+	private Thread tcpListener = null;
+	private TCPListener tcpListenerRunnable = null;
+	private static final int TELNET_TIMEOUT = 1000;
 
 
 		
 	@Override
-	protected synchronized  boolean startTelnetListener(IZoneMinderConnectionInfo connection) throws IllegalArgumentException, GeneralSecurityException, IOException, ZoneMinderUrlNotFoundException {
-		
-		Initialize(connection);
+	protected synchronized  boolean startListener(IZoneMinderConnectionHandler connection) {
 
-		tcpListenerRunnable = new TCPListener((ZoneMinderConnectionInfo) connection);
+		tcpListenerRunnable = new TCPListener(connection.getHostName(), connection.getTelnetPort());
         tcpListener = new Thread(tcpListenerRunnable);
         tcpListener.setPriority(Thread.MAX_PRIORITY);
         tcpListener.start();
@@ -142,7 +122,7 @@ public class ZoneMinderEventManager extends ZoneMinderEventNotifier  implements 
 
 	   
 	@Override
-	protected synchronized boolean stopTelnetListener() {
+	public synchronized boolean stopListener() {
 		if (tcpListenerRunnable != null) {
 			tcpListenerRunnable.stop(); 
 		}
@@ -160,135 +140,92 @@ public class ZoneMinderEventManager extends ZoneMinderEventNotifier  implements 
 	     * TCPMessageListener: Receives Socket messages from the ZoneMinder API.
 	     */
 	   
-	    private class TCPListener implements Runnable {
-	    	private ZoneMinderSession sessionTelnet = null;
-	    	private ZoneMinderConnectionInfo connection = null;
-	        
-	    	private boolean _allowRun = true;
+	private class TCPListener implements Runnable {
+		private SocketReader socketReader = null;
+		private String host;
+		private int port;
+    	private boolean _allowRun = true;
 
-			public TCPListener (ZoneMinderConnectionInfo connection) {
-	    		
-	    		this.connection = connection;
-	    		 
-	    	}
+		public TCPListener (String host, int port) {
+    		this.host = host;
+    		this.port = port;
+		}
 	    	
-	    	private void connect() throws FailedLoginException, IllegalArgumentException, IOException, ZoneMinderUrlNotFoundException, ZoneMinderCredentialsMissingException {
-	    		try {
-	    			sessionTelnet = new ZoneMinderSession(connection, false, true );
-	    		} catch (ZoneMinderApiNotEnabledException e) {
-	    			
-	    		}
-	    	}
+    	private void connect() throws IOException {
+    		
+    		socketReader = new SocketReader(host, port);
+		}
 	    	
-	    	protected synchronized boolean allowRun() {
-	    		return _allowRun;
-	    	}
+    	protected synchronized boolean allowRun() {
+    		return _allowRun;
+    	}
 
-	    	
-	    	public synchronized void stop() 
-	    	{
-	    		_allowRun = false;
-	    	
-	    		try {
-					sessionTelnet.disconnectTelnet();
-				} catch (IOException e) {
-				}
-	    	}
-	    	
-	    	// Run method. Runs the MessageListener thread
-         
-	        @Override
-	        public void run() {
-	            String messageLine = "";
+	    
+    	public synchronized  boolean isConnected()
+    	{
+    		if (socketReader!=null) {
+    			return false;
+    		}
+    		return socketReader.isConnected();
+    	}
+    	
+    	public synchronized void stop() 
+    	{
+    		_allowRun = false;
+    	
+    		try {
+    			socketReader.disconnect();
+			} catch (IOException e) {
+			}
+    	}
+    	
+    	// Run method. Runs the MessageListener thread
+     
+        @Override
+        public void run() {
+            String messageLine = "";
 
-                while(allowRun()) {
-                	try {
-	                
-		                if (sessionTelnet==null) {
-								connect();
-		                }
-		                while ((sessionTelnet!=null) && (allowRun())) {
-		                	messageLine = sessionTelnet.pollTelnet();
-		                	if (messageLine == null) {
-		                		sessionTelnet = null;
-		                		connect();
-		                	}
-		                	else if (messageLine != "") {
-		                            ZoneMinderTriggerEvent event = new ZoneMinderTriggerEvent( messageLine );
-		                        	tripMonitor(event);
-		                                                 
-		                    }
-		                	Thread.yield();
-		                }
-		            
-		        	//Don't expect any of these exceptions (Telnet son't fail login
-		            } catch (FailedLoginException | IllegalArgumentException 
-						| ZoneMinderUrlNotFoundException e) {
-		        	
-		        	} catch(IOException ioe) {
-		        		sessionTelnet = null;
-		        		try {
-							Thread.sleep(1000);
-						} catch (InterruptedException e) {
-						}
-		        	} catch (ZoneMinderCredentialsMissingException e) {
-						// TODO Auto-generated catch block
+            while(allowRun()) 
+            {
+            	try {
+                
+	                if (socketReader==null) {
+							connect();
+	                }
+	                while ((socketReader!=null) && (allowRun())) {
+	                	messageLine = socketReader.poll();
+	                	if (messageLine == null) {
+	                		socketReader = null;
+	                		connect();
+	                	}
+	                	else if (messageLine != "") {
+	                            ZoneMinderTriggerEvent event = new ZoneMinderTriggerEvent( messageLine );
+	                        	tripMonitor(event);
+	                                                 
+	                    }
+	                	Thread.yield();
+	                }
+	            
+	        	//Don't expect any of these exceptions (Telnet won't fail login :-)
+	            } catch (IllegalArgumentException e) {
+	        	
+	        	} catch(IOException ioe) {
+	        		socketReader = null;
+	        		try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
 					}
-                	
-	            }
-	        }	   
-	    }
+            	
+	        	}
+            	catch(Exception ex) {
+            		//Left blank
+            	}
+            }
+        }	   
+    }
 
 
 
-		@Override
-		public boolean validateLogin(IZoneMinderConnectionInfo connection) throws IllegalArgumentException, IOException, ZoneMinderUrlNotFoundException, ZoneMinderApiNotEnabledException {
-			   try {
-				   ZoneMinderSession session = new ZoneMinderSession(connection, true, false);
-				   return session.isConnectedHttp();
-				} catch (FailedLoginException | ZoneMinderCredentialsMissingException e) {
-					return false;
-				}
-			   
-			
-		}
-
-		@Override
-		public boolean isApiEnabled(IZoneMinderConnectionInfo connection) throws FailedLoginException, IllegalArgumentException, IOException, ZoneMinderUrlNotFoundException {
-			   try {
-				   ZoneMinderSession session = null;
-					session = new ZoneMinderSession(connection, true, false);
-					ZoneMinderServerProxy server = new ZoneMinderServerProxy(session);
-					return server.isApiEnabled();
-
-				} catch (NullPointerException | ZoneMinderApiNotEnabledException |ZoneMinderCredentialsMissingException e) {
-					return false;
-				}
-		}
-
-		@Override
-		public boolean isTriggerOptionEnabled(IZoneMinderConnectionInfo connection) throws FailedLoginException, IllegalArgumentException, IOException, ZoneMinderUrlNotFoundException, ZoneMinderApiNotEnabledException {
-			   try {
-				   ZoneMinderSession session = null;
-					session = new ZoneMinderSession(connection, true, false);
-					ZoneMinderServerProxy server = new ZoneMinderServerProxy(session);
-					return server.isTriggerOptionEnabled();
-				} catch (NullPointerException |ZoneMinderCredentialsMissingException e) {
-					return false;
-				}
-		}
-
-
-		@Override
-		public boolean isZoneMinderUrl(IZoneMinderConnectionInfo connection) throws IllegalArgumentException, ZoneMinderApiNotEnabledException {
-			   try {
-				   	ZoneMinderSession session = null;
-				   	session = new ZoneMinderSession(connection, true, false, false);
-					return session.isZoneMinderSite();
-				} catch (NullPointerException |FailedLoginException | IOException | ZoneMinderUrlNotFoundException |ZoneMinderCredentialsMissingException e) {
-					return false;
-				}
-		}
 
 
 }

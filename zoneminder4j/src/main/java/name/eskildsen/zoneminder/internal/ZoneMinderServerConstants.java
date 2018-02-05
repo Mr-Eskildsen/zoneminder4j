@@ -6,6 +6,7 @@ public class ZoneMinderServerConstants {
 	
     public static final String SUBPATH_SERVERLOGIN = "/index.php";
     
+    
     public static final String SUBPATH_API_HOST_VERSION_JSON = "/host/getVersion.json";
     public static final String SUBPATH_API_HOST_CPULOAD_JSON = "/host/getLoad.json";
     public static final String SUBPATH_API_HOST_DISKPERCENT_JSON = "/host/getDiskPercent.json";

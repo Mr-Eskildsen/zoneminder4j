@@ -7,9 +7,9 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 import name.eskildsen.zoneminder.IZoneMinderHostLoad;
-import name.eskildsen.zoneminder.api.ZoneMinderResponseData;
+import name.eskildsen.zoneminder.api.ZoneMinderCoreData;
 
-public class ZoneMinderHostLoad extends ZoneMinderResponseData implements IZoneMinderHostLoad {
+public class ZoneMinderHostLoad extends ZoneMinderCoreData implements IZoneMinderHostLoad {
 
 	@SerializedName("load")
 	@Expose
