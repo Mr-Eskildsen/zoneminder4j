@@ -1,10 +1,14 @@
 package name.eskildsen.zoneminder.internal;
 
+import java.net.InetAddress;
 import java.net.MalformedURLException;
+import java.net.NetworkInterface;
 import java.net.URI;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.Map;
 
 import javax.ws.rs.core.UriBuilder;
@@ -54,7 +58,7 @@ public abstract class GenericConnectionHandler extends HttpCore implements IZone
 	 * CONFIGURATION SETTINGS
 	 */
 	private boolean isApiEnabled = false;
-	private boolean triggerOptiionEnabled = false;
+	private boolean triggerOptionEnabled = false;
 	
 	
 	//Authentication Hash
@@ -236,13 +240,19 @@ public abstract class GenericConnectionHandler extends HttpCore implements IZone
 
 	protected void setApiEnabled(boolean enabled) {isApiEnabled = enabled;	}
 	protected void setAuthenticationEnabled(boolean enabled) {useAuthentication = enabled;}
-	protected void setTriggerOptionEnabled(boolean enabled) {triggerOptiionEnabled = enabled;}
+	protected void setTriggerOptionEnabled(boolean enabled) {triggerOptionEnabled = enabled;}
 	protected void setZoneMinderStreamingPath(String pathZms) {zoneMinderZmsPath = pathZms;}
 	
 	protected void setAuthenticationHashAllowed(boolean allowHashSecrets) {this.allowHashSecrets = allowHashSecrets;}
 	protected void setAuthenticationHashSecret(String authHashSecret) {this.authenticationHashSecret = authHashSecret;}
 	protected void setAuthenticationHashReleayMethod(String authRelayMethod) {this.authticationHashRelayMethod = authRelayMethod;}
 	protected void setAuthenticationHashUseIp(boolean useIp) {this.authticationHashUseIps = useIp;}
+	
+	
+	@Override
+	public boolean getAuthenticationHashUseIp() {
+		return authticationHashUseIps;
+	}
 	
 	@Override
 	public String getConfigAuthenticationHashSecret() {
@@ -266,7 +276,7 @@ public abstract class GenericConnectionHandler extends HttpCore implements IZone
 
 	@Override
 	public boolean isTriggerOptionEnabled() {
-		return triggerOptiionEnabled;
+		return triggerOptionEnabled;
 	}
 
 	@Override
@@ -364,14 +374,22 @@ public abstract class GenericConnectionHandler extends HttpCore implements IZone
 	
 	protected String generateAuthenticationHash() throws ZoneMinderAuthHashNotEnabled
 	{
+		// $authKey = ZM_AUTH_HASH_SECRET.$user['Username'].$user['Password'].$remoteAddr.$time[2].$time[3].$time[4].$time[5];
+		
 		try {
-	
+			
+			String seed = "";
 			//TODO Also check for IP adresses!
 			Calendar calendar = Calendar.getInstance();
-						
-			String input = String.format("%s.%s.%s.%d.%d.%d.%d", getConfigAuthenticationHashSecret(), getUserName(), getPassword(), calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.DAY_OF_MONTH), calendar.get(Calendar.MONTH) + 1, calendar.get(Calendar.YEAR));
+			
+			if (getAuthenticationHashUseIp()) {
+				seed = String.format("%s.%s.%s.%s.%d.%d.%d.%d", getConfigAuthenticationHashSecret(), getUserName(), getPassword(), getLocalHostLANAddress().getHostAddress(), calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.DAY_OF_MONTH), calendar.get(Calendar.MONTH) + 1, calendar.get(Calendar.YEAR));
+			}
+			else {
+				seed = String.format("%s.%s.%s.%d.%d.%d.%d", getConfigAuthenticationHashSecret(), getUserName(), getPassword(), calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.DAY_OF_MONTH), calendar.get(Calendar.MONTH) + 1, calendar.get(Calendar.YEAR));
+			}
 			java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
-			byte[] array = md.digest(input.getBytes());
+			byte[] array = md.digest(seed.getBytes());
 			StringBuffer generatedHash = new StringBuffer();
 			for (int i = 0; i < array.length; ++i) {
 				generatedHash.append(Integer.toHexString((array[i] & 0xFF) | 0x100).substring(1,3));
@@ -382,13 +400,80 @@ public abstract class GenericConnectionHandler extends HttpCore implements IZone
 			authHashExpires = calendar.getTime();
 		    
 		    return generatedHash.toString();
-		} catch (java.security.NoSuchAlgorithmException e) {
-			
+		} catch (java.security.NoSuchAlgorithmException|UnknownHostException e) {
+			//TODO Handle Exceptions
 		}
 		return null;	
 	}
 
+	/**
+	 * Returns an <code>InetAddress</code> object encapsulating what is most likely the machine's LAN IP address.
+	 * <p/>
+	 * This method is intended for use as a replacement of JDK method <code>InetAddress.getLocalHost</code>, because
+	 * that method is ambiguous on Linux systems. Linux systems enumerate the loopback network interface the same
+	 * way as regular LAN network interfaces, but the JDK <code>InetAddress.getLocalHost</code> method does not
+	 * specify the algorithm used to select the address returned under such circumstances, and will often return the
+	 * loopback address, which is not valid for network communication. Details
+	 * <a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4665037">here</a>.
+	 * <p/>
+	 * This method will scan all IP addresses on all network interfaces on the host machine to determine the IP address
+	 * most likely to be the machine's LAN address. If the machine has multiple IP addresses, this method will prefer
+	 * a site-local IP address (e.g. 192.168.x.x or 10.10.x.x, usually IPv4) if the machine has one (and will return the
+	 * first site-local address if the machine has more than one), but if the machine does not hold a site-local
+	 * address, this method will return simply the first non-loopback address found (IPv4 or IPv6).
+	 * <p/>
+	 * If this method cannot find a non-loopback address using this selection algorithm, it will fall back to
+	 * calling and returning the result of JDK method <code>InetAddress.getLocalHost</code>.
+	 * <p/>
+	 *
+	 * @throws UnknownHostException If the LAN address of the machine cannot be found.
+	 */
+	private InetAddress getLocalHostLANAddress() throws UnknownHostException {
+	    try {
+	        InetAddress candidateAddress = null;
+	        // Iterate all NICs (network interface cards)...
+	        for (Enumeration ifaces = NetworkInterface.getNetworkInterfaces(); ifaces.hasMoreElements();) {
+	            NetworkInterface iface = (NetworkInterface) ifaces.nextElement();
+	            // Iterate all IP addresses assigned to each card...
+	            for (Enumeration inetAddrs = iface.getInetAddresses(); inetAddrs.hasMoreElements();) {
+	                InetAddress inetAddr = (InetAddress) inetAddrs.nextElement();
+	                if (!inetAddr.isLoopbackAddress()) {
 
+	                    if (inetAddr.isSiteLocalAddress()) {
+	                        // Found non-loopback site-local address. Return it immediately...
+	                        return inetAddr;
+	                    }
+	                    else if (candidateAddress == null) {
+	                        // Found non-loopback address, but not necessarily site-local.
+	                        // Store it as a candidate to be returned if site-local address is not subsequently found...
+	                        candidateAddress = inetAddr;
+	                        // Note that we don't repeatedly assign non-loopback non-site-local addresses as candidates,
+	                        // only the first. For subsequent iterations, candidate will be non-null.
+	                    }
+	                }
+	            }
+	        }
+	        if (candidateAddress != null) {
+	            // We did not find a site-local address, but we found some other non-loopback address.
+	            // Server might have a non-site-local address assigned to its NIC (or it might be running
+	            // IPv6 which deprecates the "site-local" concept).
+	            // Return this non-loopback candidate address...
+	            return candidateAddress;
+	        }
+	        // At this point, we did not find a non-loopback address.
+	        // Fall back to returning whatever InetAddress.getLocalHost() returns...
+	        InetAddress jdkSuppliedAddress = InetAddress.getLocalHost();
+	        if (jdkSuppliedAddress == null) {
+	            throw new UnknownHostException("The JDK InetAddress.getLocalHost() method unexpectedly returned null.");
+	        }
+	        return jdkSuppliedAddress;
+	    }
+	    catch (Exception e) {
+	        UnknownHostException unknownHostException = new UnknownHostException("Failed to determine LAN address: " + e);
+	        unknownHostException.initCause(e);
+	        throw unknownHostException;
+	    }
+	}
 	
 	
 	

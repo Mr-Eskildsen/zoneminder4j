@@ -45,6 +45,7 @@ public interface IZoneMinderConnectionHandler/*extends IZoneMinderConnectionInfo
 
 	
 	boolean isAuthenticationHashAllowed();
+	boolean getAuthenticationHashUseIp();
 	String getConfigAuthenticationHashSecret();
 	String getAuthHashToken() throws ZoneMinderAuthHashNotEnabled;
 	
