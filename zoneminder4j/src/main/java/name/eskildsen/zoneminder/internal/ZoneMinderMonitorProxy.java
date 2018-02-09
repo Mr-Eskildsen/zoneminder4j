@@ -10,37 +10,39 @@ import java.util.List;
 
 import javax.ws.rs.core.UriBuilder;
 
+import org.eclipse.jetty.util.Fields;
 import org.eclipse.jetty.util.UrlEncoded;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import name.eskildsen.zoneminder.IZoneMinderDaemonStatus;
-
-import name.eskildsen.zoneminder.IZoneMinderEventData;
 import name.eskildsen.zoneminder.IZoneMinderMonitor;
-import name.eskildsen.zoneminder.IMonitorDataGeneral;
-import name.eskildsen.zoneminder.IMonitorDataStillImage;
+import name.eskildsen.zoneminder.IZoneMinderResponse;
 import name.eskildsen.zoneminder.IZoneMinderConnectionHandler;
 import name.eskildsen.zoneminder.IZoneMinderHttpSession;
-import name.eskildsen.zoneminder.api.ZoneMinderCoreData;
-import name.eskildsen.zoneminder.api.daemon.ZoneMinderMonitorDaemonStatus;
 import name.eskildsen.zoneminder.api.event.ZoneMinderEvent;
-import name.eskildsen.zoneminder.api.exception.ZoneMinderAuthHashNotEnabled;
 import name.eskildsen.zoneminder.api.monitor.ZoneMinderMonitorData;
 import name.eskildsen.zoneminder.api.monitor.ZoneMinderMonitorImage;
-import name.eskildsen.zoneminder.common.ZoneMinderMonitorFunctionEnum;
-import name.eskildsen.zoneminder.common.ZoneMinderMonitorStatusEnum;
+import name.eskildsen.zoneminder.data.IMonitorDataGeneral;
+import name.eskildsen.zoneminder.data.IMonitorDataStillImage;
+import name.eskildsen.zoneminder.data.IZoneMinderDaemonStatus;
+import name.eskildsen.zoneminder.data.IZoneMinderEventData;
+import name.eskildsen.zoneminder.data.ZoneMinderCoreData;
+import name.eskildsen.zoneminder.data.ZoneMinderMonitorDaemonStatus;
+import name.eskildsen.zoneminder.exception.ZoneMinderAuthHashNotEnabled;
 import name.eskildsen.zoneminder.exception.ZoneMinderAuthenticationException;
 import name.eskildsen.zoneminder.exception.ZoneMinderException;
 import name.eskildsen.zoneminder.exception.ZoneMinderGeneralException;
 import name.eskildsen.zoneminder.exception.ZoneMinderInvalidData;
+import name.eskildsen.zoneminder.exception.ZoneMinderResponseException;
 import name.eskildsen.zoneminder.exception.ZoneMinderStreamConfigException;
 import name.eskildsen.zoneminder.exception.ZoneMinderUrlNotFoundException;
-import name.eskildsen.zoneminder.exception.http.ZoneMinderResponseException;
 import name.eskildsen.zoneminder.jetty.JettyQueryParameter;
 import name.eskildsen.zoneminder.api.monitor.ZoneMinderMonitorStatus;
+import name.eskildsen.zoneminder.common.ZoneMinderMonitorFunctionEnum;
+import name.eskildsen.zoneminder.common.ZoneMinderMonitorStatusEnum;
+import name.eskildsen.zoneminder.common.ZoneMinderServerConstants;
 
 
 public class ZoneMinderMonitorProxy extends ZoneMinderGenericProxy implements IZoneMinderMonitor {
@@ -77,7 +79,7 @@ public class ZoneMinderMonitorProxy extends ZoneMinderGenericProxy implements IZ
             path = replaceParameter(path, "DaemonName", daemonName);
             
             response = getConnection().getPageContent(buildUriApi( path ));
-            return ZoneMinderCoreData.createFromJson(response.getContentAsJsonObject(), response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderMonitorDaemonStatus.class);
+            return IZoneMinderResponse.createFromJson(response.getContentAsJsonObject(), response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderMonitorDaemonStatus.class);
             
         } catch (IOException e) {
         	return null;
@@ -91,32 +93,37 @@ public class ZoneMinderMonitorProxy extends ZoneMinderGenericProxy implements IZ
     }
 	
     
-    protected ArrayList<JettyQueryParameter> createImageParameterList()
+    protected ArrayList<JettyQueryParameter> createImageParameterList(Integer scale, Integer buffer, JettyQueryParameter[] extraParams) throws ZoneMinderAuthHashNotEnabled
     {
     	ArrayList<JettyQueryParameter> list = new ArrayList<JettyQueryParameter>();
-
-    	//TODO Fix this session stuff
-    	
 		list.add(new JettyQueryParameter("monitor", getId()));
-		list.add(new JettyQueryParameter("scale", "100"));
-		list.add(new JettyQueryParameter("buffer", "100"));
-
-		String paramAuth = "";
-		//TODO Use of deprecated method
-		if (getConnection().isAuthenticationHashAllowed()==true)
-		{
-			list.add(new JettyQueryParameter("user", getConnection().getUserName()));
-			try {
-				list.add(new JettyQueryParameter("auth", getConnection().getAuthHashToken()));
-			} catch (ZoneMinderAuthHashNotEnabled e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+		list.add(new JettyQueryParameter("scale", scale.toString()));
+		list.add(new JettyQueryParameter("buffer", buffer.toString()));
+		
+		if (extraParams!=null) {
+			//Add custom parameters to query
+			for (int idx = 0;idx<extraParams.length;idx++) {
+				list.add(extraParams[idx]);	
 			}
 		}
-		else if (getConnection().isAuthenticationEnabled())
-		{
-			list.add(new JettyQueryParameter("user", getConnection().getUserName()));
-			list.add(new JettyQueryParameter("pass", getConnection().getPassword()));
+		
+		String paramAuth = "";
+		if (getConnection().getAuthenticationHashAllowed() && getConnection().isAuthenticationEnabled()) {
+			
+			switch(getConnection().getAuthenticationHashReleayMethod()) {
+			case Plain:
+
+				list.add(new JettyQueryParameter("pass", getConnection().getStreamingPassword()));
+				//list.add(new JettyQueryParameter("pass", getConnection().getPassword()));
+	
+			case None:
+				list.add(new JettyQueryParameter("user", getConnection().getStreamingUserName()));
+				break;
+				
+			case Hashed:
+				list.add(new JettyQueryParameter("auth", getConnection().getAuthHashToken()));
+				break;
+			}
 		}
 
     	return list;
@@ -157,11 +164,11 @@ public class ZoneMinderMonitorProxy extends ZoneMinderGenericProxy implements IZ
 	}
     
     @Override
-	public String getMonitorStreamingPath() throws MalformedURLException, ZoneMinderGeneralException, ZoneMinderResponseException {
+	public String getMonitorStreamingPath(Integer scale, Integer buffer, JettyQueryParameter[] extraParams) throws MalformedURLException, ZoneMinderGeneralException, ZoneMinderResponseException, ZoneMinderAuthHashNotEnabled {
 		ZoneMinderContentResponse zmcr = null;
 	//TODO HAndle Scale + Buffer		
 			
-		List<JettyQueryParameter> parameters = createImageParameterList(); //getMonitorStreamingParameterList();
+		List<JettyQueryParameter> parameters = createImageParameterList(scale, buffer, extraParams);
 		//parameters.add(new JettyQueryParameter("mode", "mjpeg");
 
 
@@ -185,28 +192,28 @@ public class ZoneMinderMonitorProxy extends ZoneMinderGenericProxy implements IZ
     
 	@Override
 	public IMonitorDataStillImage getMonitorStillImage() throws MalformedURLException, ZoneMinderStreamConfigException {
-		return _getMonitorStillImage(null, null);
+		return _getMonitorStillImage(null, null, null);
 	}
 	
 	@Override
-	public IMonitorDataStillImage getMonitorStillImage(Integer scale) throws MalformedURLException, ZoneMinderStreamConfigException {
-		return _getMonitorStillImage(scale, null);
+	public IMonitorDataStillImage getMonitorStillImage(Integer scale, JettyQueryParameter[] extraParams) throws MalformedURLException, ZoneMinderStreamConfigException {
+		return _getMonitorStillImage(scale, null, extraParams);
 	}
 
 	@Override
-	public IMonitorDataStillImage getMonitorStillImage(Integer scale, Integer buffer) throws MalformedURLException, ZoneMinderStreamConfigException {
-		return _getMonitorStillImage(scale, buffer);
+	public IMonitorDataStillImage getMonitorStillImage(Integer scale, Integer buffer, JettyQueryParameter[] extraParams) throws MalformedURLException, ZoneMinderStreamConfigException {
+		return _getMonitorStillImage(scale, buffer, extraParams);
 	}
 	
 	
-	public IMonitorDataStillImage _getMonitorStillImage(Integer scale, Integer buffer) throws MalformedURLException, ZoneMinderStreamConfigException 
+	public IMonitorDataStillImage _getMonitorStillImage(Integer scale, Integer buffer, JettyQueryParameter[] extraParams) throws MalformedURLException, ZoneMinderStreamConfigException 
 	{
 		ZoneMinderMonitorImage imageData = null; 
 		ZoneMinderContentResponse zmcr = null;
 		try {
 	//TODO HAndle Scale + Buffer		
 			URI uri = getMonitorStreamingURI();
-			List<JettyQueryParameter> parameters = createImageParameterList(); //getMonitorStreamingParameterList();
+			List<JettyQueryParameter> parameters = createImageParameterList(scale, buffer, extraParams);
 			parameters.add(new JettyQueryParameter("mode", "single"));
 	
 			ByteArrayOutputStream baos = null;
@@ -279,7 +286,7 @@ public class ZoneMinderMonitorProxy extends ZoneMinderGenericProxy implements IZ
                 ZoneMinderEvent event = null;
                 for (JsonElement curJsonEvent : jsonEvents) {
                 	
-                	event = ZoneMinderCoreData.createFromJson(((JsonObject)curJsonEvent).getAsJsonObject("Event"),
+                	event = IZoneMinderResponse.createFromJson(((JsonObject)curJsonEvent).getAsJsonObject("Event"),
                 											response.getHttpStatus(), 
                 											response.getHttpResponseMessage(), 
                 											response.getHttpRequestURI(), 
@@ -379,11 +386,11 @@ public class ZoneMinderMonitorProxy extends ZoneMinderGenericProxy implements IZ
                 JsonArray jsonEvents = jsonObject.getAsJsonArray("events");
                 ZoneMinderEvent curEvent = null;
                 for (JsonElement curJsonEvent : jsonEvents) {
-                	curEvent = ZoneMinderCoreData.createFromJson(((JsonObject)curJsonEvent).getAsJsonObject("Event"),
-							response.getHttpStatus(), 
-							response.getHttpResponseMessage(), 
-							response.getHttpRequestURI(), 
-							ZoneMinderEvent.class);
+                	curEvent = IZoneMinderResponse.createFromJson(((JsonObject)curJsonEvent).getAsJsonObject("Event"),
+                						response.getHttpStatus(), 
+										response.getHttpResponseMessage(), 
+										response.getHttpRequestURI(), 
+										ZoneMinderEvent.class);
 
                 	if (curEvent != null) {
                         // Return last event
@@ -450,7 +457,7 @@ public class ZoneMinderMonitorProxy extends ZoneMinderGenericProxy implements IZ
  	            String path = replaceParameter(ZoneMinderServerConstants.SUBPATH_API_MONITOR_SPECIFIC_JSON, "MonitorId", getId());
                 response = getConnection().getPageContent(buildUriApi(path), null);
 
-                monitorData = ZoneMinderCoreData.createFromJson(response.getContentAsJsonObject().getAsJsonObject("monitor").getAsJsonObject("Monitor"), 
+                monitorData = IZoneMinderResponse.createFromJson(response.getContentAsJsonObject().getAsJsonObject("monitor").getAsJsonObject("Monitor"), 
                 												response.getHttpStatus(), 
                 												response.getHttpResponseMessage(), 
                 												response.getHttpRequestURI(), 
@@ -481,7 +488,7 @@ public class ZoneMinderMonitorProxy extends ZoneMinderGenericProxy implements IZ
  	            String path = replaceParameter(ZoneMinderServerConstants.SUBPATH_API_MONITOR_ALARM_JSON, "MonitorId", getId());
                 response = getConnection().getPageContent(buildUriApi(path), null);
 
-                status = ZoneMinderCoreData.createFromJson(response.getContentAsJsonObject(), 
+                status = IZoneMinderResponse.createFromJson(response.getContentAsJsonObject(), 
 	            		 								response.getHttpStatus(), 
 	            		 								response.getHttpResponseMessage(), 
 	            		 								response.getHttpRequestURI(), 
@@ -542,11 +549,14 @@ public class ZoneMinderMonitorProxy extends ZoneMinderGenericProxy implements IZ
 	private ZoneMinderContentResponse setMonitorProperty(JettyQueryParameter setting) throws MalformedURLException, ZoneMinderException {
 		String methodPath = "";
 		String action = "";
-		ArrayList<JettyQueryParameter> queryParam = new ArrayList<JettyQueryParameter>();
+//		ArrayList<JettyQueryParameter> queryParam = new ArrayList<JettyQueryParameter>();
 		//	TODO HArdcoded
 		methodPath = replaceParameter(ZoneMinderServerConstants.SUBPATH_API_MONITOR_SPECIFIC_JSON, "MonitorId", getId());
-		queryParam.add(setting);
-		return getConnection().sendPut(buildUriApi(methodPath), queryParam);	
+		//queryParam.add(setting);
+		//TODO Fix Fields
+		Fields fields = new Fields();
+		fields.add(setting.getName(), setting.getValue());
+		return getConnection().sendPut(buildUriApi(methodPath), fields);	
 	
 	}
 

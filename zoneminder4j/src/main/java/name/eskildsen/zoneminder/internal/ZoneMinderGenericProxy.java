@@ -20,17 +20,16 @@ import com.google.gson.JsonParser;
 import name.eskildsen.zoneminder.IZoneMinderConnectionHandler;
 import name.eskildsen.zoneminder.IZoneMinderConnectionInfo;
 import name.eskildsen.zoneminder.IZoneMinderResponse;
-import name.eskildsen.zoneminder.IZoneMinderHttpSession;
-
-import name.eskildsen.zoneminder.api.ZoneMinderCoreData;
-import name.eskildsen.zoneminder.api.config.ZoneMinderConfig;
-import name.eskildsen.zoneminder.api.config.ZoneMinderConfigEnum;
+import name.eskildsen.zoneminder.common.SiteTypeEnum;
+import name.eskildsen.zoneminder.common.ZoneMinderConfigEnum;
+import name.eskildsen.zoneminder.data.ZoneMinderConfigImpl;
+import name.eskildsen.zoneminder.data.ZoneMinderCoreData;
 import name.eskildsen.zoneminder.exception.ZoneMinderAuthenticationException;
 import name.eskildsen.zoneminder.exception.ZoneMinderGeneralException;
 import name.eskildsen.zoneminder.exception.ZoneMinderInvalidData;
+import name.eskildsen.zoneminder.exception.ZoneMinderResponseException;
 import name.eskildsen.zoneminder.exception.ZoneMinderStreamConfigException;
 import name.eskildsen.zoneminder.exception.ZoneMinderUrlNotFoundException;
-import name.eskildsen.zoneminder.exception.http.ZoneMinderResponseException;
 import name.eskildsen.zoneminder.jetty.HttpCore;
 import name.eskildsen.zoneminder.jetty.JettyQueryParameter;
 

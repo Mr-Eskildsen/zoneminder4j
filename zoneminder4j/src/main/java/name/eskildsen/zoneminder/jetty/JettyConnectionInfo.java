@@ -15,10 +15,15 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriBuilderException;
 
 import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.api.ContentProvider;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.client.util.FormContentProvider;
+import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.HttpStatus;
+import org.eclipse.jetty.http.HttpVersion;
+import org.eclipse.jetty.util.Fields;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 import com.google.gson.Gson;
@@ -27,22 +32,24 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import name.eskildsen.zoneminder.IZoneMinderConnectionHandler;
-import name.eskildsen.zoneminder.api.ZoneMinderCoreData;
-import name.eskildsen.zoneminder.api.config.ZoneMinderConfig;
-import name.eskildsen.zoneminder.api.config.ZoneMinderConfigEnum;
-import name.eskildsen.zoneminder.api.host.ZoneMinderHostVersion;
+import name.eskildsen.zoneminder.IZoneMinderResponse;
+import name.eskildsen.zoneminder.common.ZoneMinderConfigEnum;
+import name.eskildsen.zoneminder.common.ZoneMinderServerConstants;
+import name.eskildsen.zoneminder.common.ZoneMinderSessionConstants;
+import name.eskildsen.zoneminder.data.ZoneMinderConfigImpl;
+import name.eskildsen.zoneminder.data.ZoneMinderConfigImpl;
+import name.eskildsen.zoneminder.data.ZoneMinderCoreData;
+import name.eskildsen.zoneminder.data.ZoneMinderHostVersion;
 import name.eskildsen.zoneminder.exception.ZoneMinderApiNotEnabledException;
 import name.eskildsen.zoneminder.exception.ZoneMinderAuthenticationException;
 import name.eskildsen.zoneminder.exception.ZoneMinderException;
 import name.eskildsen.zoneminder.exception.ZoneMinderGeneralException;
 import name.eskildsen.zoneminder.exception.ZoneMinderInvalidData;
+import name.eskildsen.zoneminder.exception.ZoneMinderResponseException;
 import name.eskildsen.zoneminder.exception.ZoneMinderStreamConfigException;
-import name.eskildsen.zoneminder.exception.http.ZoneMinderResponseException;
 import name.eskildsen.zoneminder.general.ProtocolType;
 import name.eskildsen.zoneminder.internal.GenericConnectionHandler;
 import name.eskildsen.zoneminder.internal.ZoneMinderContentResponse;
-import name.eskildsen.zoneminder.internal.ZoneMinderServerConstants;
-import name.eskildsen.zoneminder.internal.ZoneMinderSessionConstants;
 
 public class JettyConnectionInfo extends GenericConnectionHandler implements IZoneMinderConnectionHandler {
 	//TODO Remove????
@@ -52,11 +59,13 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 
 	
 	public JettyConnectionInfo(String protocol, String hostName, Integer portHttp, Integer portTelnet, String userName,
-			String password, String zmPortalSubPath, String zmApiSubPath, Integer timeout) throws ZoneMinderApiNotEnabledException, ZoneMinderAuthenticationException {
+			String password, String streamingUserName, String streamingPassword, String zmPortalSubPath, String zmApiSubPath, Integer timeout) throws ZoneMinderApiNotEnabledException, ZoneMinderAuthenticationException {
 
-		super(protocol, hostName, portHttp, portTelnet, userName, password, zmPortalSubPath, zmApiSubPath, timeout);
+		super(protocol, hostName, portHttp, portTelnet, userName, password, streamingUserName, streamingPassword, zmPortalSubPath, zmApiSubPath, timeout);
 
 	}
+	
+	
 	private ZoneMinderContentResponse doItSync(String url, HttpMethod httpMethod) throws ZoneMinderGeneralException, ZoneMinderResponseException, IllegalArgumentException, UriBuilderException {
 		return fetchContentResponse(UriBuilder.fromPath(url).build(),httpMethod, null);
 	}
@@ -92,7 +101,7 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 		
 		Request request = createRequest(uri)
 								.method(httpMethod);
-		
+		/*
 		for (int idx=0; idx<parameters.size();idx++) {
 			try {
 				request = request.param(parameters.get(idx).getName(), URLEncoder.encode(parameters.get(idx).getValue(), "UTF-8"));
@@ -101,6 +110,12 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 				e.printStackTrace();
 			}
 		}
+		*/
+		
+		for (int idx=0; idx<parameters.size();idx++) {
+			request = request.param(parameters.get(idx).getName(), parameters.get(idx).getValue());
+		}
+
 		
 		boolean requestDone = false;
 		int retryCount = 0;
@@ -144,7 +159,9 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 							
 							JsonObject jsonException = parser.parse(response).getAsJsonObject();
 							
-							responseException = gson.fromJson(jsonException, ZoneMinderResponseException.class);
+							responseException = new ZoneMinderResponseException(responseHandler.getResponse(), jsonException); 
+									
+									
 						}
 						catch(Exception ex) {
 							//TODO Handle any conversion errors
@@ -223,7 +240,7 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 				if (zmre.getHttpStatus()==HttpStatus.UNAUTHORIZED_401) {
 					setConnected(false);
 		
-					String message = zmre.getHttpMessage();
+					String message = zmre.getExceptionMessage();
 					
 					if (message.equals(ZoneMinderSessionConstants.NOT_AUTHENTICATED)) {
 						setAuthenticationEnabled(true);
@@ -236,8 +253,7 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 					}
 					else
 					{
-						//TODO Use original Exception
-						throw new ZoneMinderGeneralException("Unknown Error occurred when checking API Status (Status='" + zmre.getHttpStatus() + "', Message='" + zmre.getHttpMessage() + "')", null);			
+						throw new ZoneMinderGeneralException("Unknown Error occurred when checking API Status (Status='" + zmre.getHttpStatus() + "', Message='" + zmre.getHttpMessage() + "')", zmre);			
 					}
 				}
 			}
@@ -254,16 +270,16 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 			throw zme;
 		}
 		
-		ZoneMinderConfig cfg = null; 
-		ZoneMinderConfig cfgOptTriggers = null;
+		ZoneMinderConfigImpl cfg = null; 
+		ZoneMinderConfigImpl cfgOptTriggers = null;
 		//Allow Hash logins?
-		ZoneMinderConfig cfgAuthHashLogins = null;
+		ZoneMinderConfigImpl cfgAuthHashLogins = null;
 		//Hash relay (must be none)
-		ZoneMinderConfig cfgAuthHashRelay = null;
+		ZoneMinderConfigImpl cfgAuthHashRelay = null;
 		// Auth Hash Secret
-		ZoneMinderConfig cfgAuthHashSecret = null;
+		ZoneMinderConfigImpl cfgAuthHashSecret = null;
 			
-		ZoneMinderConfig cfgAuthHashUseIps = null;
+		ZoneMinderConfigImpl cfgAuthHashUseIps = null;
 		//JsonObject json = null;
 		JsonResponse jsonResponse = null;
 			
@@ -274,7 +290,7 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 			 */
 			jsonResponse = fetchDataAsJson( 
 					buildURI(getApiUri(),resolvePlaceholder(ZoneMinderServerConstants.SUBPATH_API_SERVER_GET_CONFIG_JSON, "ConfigId", ZoneMinderConfigEnum.ZM_PATH_ZMS.name())), HttpMethod.GET, null );
-			cfg = ZoneMinderCoreData.createFromJson(jsonResponse.getJsonObject().getAsJsonObject("config").getAsJsonObject("Config"), jsonResponse.getHttpStatus(), jsonResponse.getHttpMessage(), jsonResponse.getRequestURI(), ZoneMinderConfig.class);;
+			cfg = IZoneMinderResponse.createFromJson(jsonResponse.getJsonObject().getAsJsonObject("config").getAsJsonObject("Config"), jsonResponse.getHttpStatus(), jsonResponse.getHttpMessage(), jsonResponse.getRequestURI(), ZoneMinderConfigImpl.class);
 			
 			setZoneMinderStreamingPath(cfg.getValueAsString());
 			
@@ -285,7 +301,7 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 								buildURI(getApiUri(),resolvePlaceholder(ZoneMinderServerConstants.SUBPATH_API_SERVER_GET_CONFIG_JSON, "ConfigId", ZoneMinderConfigEnum.ZM_OPT_TRIGGERS.name())), HttpMethod.GET, null );
 								
 			//TODO Fix hardcoded names
-			cfgOptTriggers = ZoneMinderCoreData.createFromJson(jsonResponse.getJsonObject().getAsJsonObject("config").getAsJsonObject("Config"), jsonResponse.getHttpStatus(), jsonResponse.getHttpMessage(), jsonResponse.getRequestURI(), ZoneMinderConfig.class);
+			cfgOptTriggers = IZoneMinderResponse.createFromJson(jsonResponse.getJsonObject().getAsJsonObject("config").getAsJsonObject("Config"), jsonResponse.getHttpStatus(), jsonResponse.getHttpMessage(), jsonResponse.getRequestURI(), ZoneMinderConfigImpl.class);
 			 
 			
 			setTriggerOptionEnabled(cfgOptTriggers.getvalueAsBoolean());
@@ -295,24 +311,24 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 			jsonResponse = fetchDataAsJson(
 								buildURI(getApiUri(),resolvePlaceholder(ZoneMinderServerConstants.SUBPATH_API_SERVER_GET_CONFIG_JSON, "ConfigId", ZoneMinderConfigEnum.ZM_AUTH_HASH_LOGINS.name())), HttpMethod.GET, null );
 			//TODO Fix hardcoded names
-			cfgAuthHashLogins = ZoneMinderCoreData.createFromJson(jsonResponse.getJsonObject().getAsJsonObject("config").getAsJsonObject("Config"), jsonResponse.getHttpStatus(), jsonResponse.getHttpMessage(), jsonResponse.getRequestURI(), ZoneMinderConfig.class);
+			cfgAuthHashLogins = IZoneMinderResponse.createFromJson(jsonResponse.getJsonObject().getAsJsonObject("config").getAsJsonObject("Config"), jsonResponse.getHttpStatus(), jsonResponse.getHttpMessage(), jsonResponse.getRequestURI(), ZoneMinderConfigImpl.class);
 			setAuthenticationHashAllowed(cfgAuthHashLogins.getvalueAsBoolean());
 			
 			jsonResponse = fetchDataAsJson( 
 								buildURI(getApiUri(),resolvePlaceholder(ZoneMinderServerConstants.SUBPATH_API_SERVER_GET_CONFIG_JSON, "ConfigId", ZoneMinderConfigEnum.ZM_AUTH_RELAY.name())), HttpMethod.GET, null );
-			cfgAuthHashRelay = ZoneMinderCoreData.createFromJson(jsonResponse.getJsonObject().getAsJsonObject("config").getAsJsonObject("Config"), jsonResponse.getHttpStatus(), jsonResponse.getHttpMessage(), jsonResponse.getRequestURI(), ZoneMinderConfig.class);
+			cfgAuthHashRelay = IZoneMinderResponse.createFromJson(jsonResponse.getJsonObject().getAsJsonObject("config").getAsJsonObject("Config"), jsonResponse.getHttpStatus(), jsonResponse.getHttpMessage(), jsonResponse.getRequestURI(), ZoneMinderConfigImpl.class);
 			setAuthenticationHashReleayMethod(cfgAuthHashRelay.getValueAsString());
 			
 			
 			jsonResponse = fetchDataAsJson( 
 								buildURI(getApiUri(),resolvePlaceholder(ZoneMinderServerConstants.SUBPATH_API_SERVER_GET_CONFIG_JSON, "ConfigId", ZoneMinderConfigEnum.ZM_AUTH_HASH_SECRET.name())), HttpMethod.GET, null );
-			cfgAuthHashSecret = ZoneMinderCoreData.createFromJson(jsonResponse.getJsonObject().getAsJsonObject("config").getAsJsonObject("Config"), jsonResponse.getHttpStatus(), jsonResponse.getHttpMessage(), jsonResponse.getRequestURI(), ZoneMinderConfig.class);
+			cfgAuthHashSecret = IZoneMinderResponse.createFromJson(jsonResponse.getJsonObject().getAsJsonObject("config").getAsJsonObject("Config"), jsonResponse.getHttpStatus(), jsonResponse.getHttpMessage(), jsonResponse.getRequestURI(), ZoneMinderConfigImpl.class);
 			
 			setAuthenticationHashSecret(cfgAuthHashSecret.getValueAsString());
 			
 			jsonResponse = fetchDataAsJson( 
 					buildURI(getApiUri(),resolvePlaceholder(ZoneMinderServerConstants.SUBPATH_API_SERVER_GET_CONFIG_JSON, "ConfigId", ZoneMinderConfigEnum.ZM_AUTH_HASH_IPS.name())), HttpMethod.GET, null );
-			cfgAuthHashUseIps = ZoneMinderCoreData.createFromJson(jsonResponse.getJsonObject().getAsJsonObject("config").getAsJsonObject("Config"), jsonResponse.getHttpStatus(), jsonResponse.getHttpMessage(), jsonResponse.getRequestURI(), ZoneMinderConfig.class);
+			cfgAuthHashUseIps = IZoneMinderResponse.createFromJson(jsonResponse.getJsonObject().getAsJsonObject("config").getAsJsonObject("Config"), jsonResponse.getHttpStatus(), jsonResponse.getHttpMessage(), jsonResponse.getRequestURI(), ZoneMinderConfigImpl.class);
 			setAuthenticationHashUseIp(cfgAuthHashUseIps.getvalueAsBoolean());
 			
 
@@ -570,9 +586,9 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 	private Request createRequest(URI uri)
 	{
 		return jettyHttpClient.newRequest(uri);
-		//.version(HttpVersion.HTTP_1_1)
-		//.accept( "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8")
-		//.agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36");
+//					.version(HttpVersion.HTTP_1_1)
+	//				.accept( "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8")
+		//			.agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36");
 		//.timeout(10, TimeUnit.SECONDS);
 
 		//request.method(HttpMethod.HEAD);
@@ -623,11 +639,20 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 	}
 	
 	@Override
-	public ZoneMinderContentResponse sendPut(URI uri, List<JettyQueryParameter> parameters)
+	public ZoneMinderContentResponse sendPut(URI uri, Fields fields)
 			throws MalformedURLException,
 			ZoneMinderException {
-		return send(uri, HttpMethod.PUT, parameters);
+
+		ContentProvider contentProvider = new FormContentProvider(fields);
+		Request request = createRequest(uri)
+				.content(contentProvider)
+				.method(HttpMethod.PUT).content(contentProvider);
+		
+		return execute(request);
+
 	}
+
+		
 	
 	@Override
 	public ZoneMinderContentResponse sendPost(URI uri, List<JettyQueryParameter> parameters)
@@ -637,6 +662,7 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 	}
 	
 	
+	@Deprecated
 	private ZoneMinderContentResponse send(URI uri, HttpMethod httpMethod, List<JettyQueryParameter> parameters)
 				throws MalformedURLException, ZoneMinderException
 	{
@@ -654,9 +680,19 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 			parameters = new ArrayList<JettyQueryParameter>();
 		}
 	
-		
+		ContentProvider contentProvider = null;
+		if (httpMethod == HttpMethod.PUT) {
+			parameters = new ArrayList<JettyQueryParameter>();
+			//contentProvider = new StringContentProvider("Monitor[Enabled]=");
+			Fields fields = new Fields();
+			fields.add("Monitor[Enabled]","1");
+			contentProvider = new FormContentProvider(fields);
+		}
+			
 		Request request = createRequest(uri)
-								.method(httpMethod);
+								.content(contentProvider)
+								.method(httpMethod).content(contentProvider);
+		
 		
 		for (int idx=0; idx<parameters.size();idx++) {
 			request = request.param(parameters.get(idx).getName(), parameters.get(idx).getValue());
@@ -731,39 +767,75 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 
 	
 	
-	
-/* * 
- * TODO FROM OLD INTERFACE 
-	@Override
-	public String getPageContentAsString(String url)
-			throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException,
-			ZoneMinderResponseException, IllegalArgumentException, UriBuilderException {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-	}
-	@Override
-	public String getPageContentAsString(String url, List<JettyQueryParameter> parameters)
-			throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException,
-			ZoneMinderResponseException, IllegalArgumentException, UriBuilderException {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-	}
-	@Override
-	public ByteArrayOutputStream getPageContentAsByteArray(String url, List<JettyQueryParameter> parameters)
-			throws ZoneMinderAuthenticationException, ZoneMinderStreamConfigException, ZoneMinderGeneralException {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-	}
-	@Override
-	public void sendPost(String url, Map<String, String> postParams) throws ZoneMinderAuthenticationException {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-	}
-	@Override
-	public void sendPost(String url, List<JettyQueryParameter> parameters) throws ZoneMinderAuthenticationException {
-		// TODO Auto-generated method stub
 
-		throw new UnsupportedOperationException();
+	private ZoneMinderContentResponse execute(Request request)
+			throws MalformedURLException, ZoneMinderException
+	{
+
+		ZoneMinderContentResponse responseHandler = new ZoneMinderContentResponse(); 
+		if (!jettyHttpClient.isStarted()) {
+			try {
+				jettyHttpClient.start();
+			} catch (Exception e) {
+				throw new ZoneMinderGeneralException("Failed to (re)start HTTP client", e.getCause());
+			}
+		}
+		
+		request.onResponseSuccess(responseHandler)
+	
+				.onResponseFailure(responseHandler)
+				.send(responseHandler);
+			
+		
+		while ( responseHandler.isRunning() )
+		{
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				// TODO handle this
+				e.printStackTrace();
+			}
+		}
+			
+		switch(responseHandler.getResponse().getStatus()) {
+		case 0:
+			//Simply retry before giving in
+			break;
+		case HttpStatus.OK_200:
+			break;
+		default:
+			Integer status = responseHandler.getResponse().getStatus(); 
+			String response = responseHandler.getContentAsString();
+			if (response!=null) {
+				ZoneMinderResponseException responseException = null;
+				try {
+					
+					JsonParser parser = new JsonParser();
+					Gson gson = new Gson();
+					
+					JsonObject jsonException = parser.parse(response).getAsJsonObject();
+					
+					responseException = gson.fromJson(jsonException, ZoneMinderResponseException.class);
+				}
+				catch(Exception ex) {
+					//TODO Handle any conversion errors
+					throw ex;
+				}
+				if (responseException!=null) {
+					throw responseException;
+				}
+			}
+			else {
+				
+				String message = String.format("Query '%s' failed (Status='%d')", request.getURI().toString(), responseHandler.getResponse().getStatus() );
+				throw new ZoneMinderGeneralException(message, null); 
+			}
+			break;
+		}
+
+		return responseHandler;
 	}
-	*/
+
+
+	
 }

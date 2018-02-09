@@ -17,29 +17,31 @@ import com.google.gson.JsonObject;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-import name.eskildsen.zoneminder.IZoneMinderDaemonStatus;
-import name.eskildsen.zoneminder.IZoneMinderDiskUsage;
-import name.eskildsen.zoneminder.IZoneMinderHostLoad;
-import name.eskildsen.zoneminder.IZoneMinderHostVersion;
-import name.eskildsen.zoneminder.IMonitorDataGeneral;
 import name.eskildsen.zoneminder.IZoneMinderConnectionHandler;
+import name.eskildsen.zoneminder.IZoneMinderResponse;
 import name.eskildsen.zoneminder.IZoneMinderServer;
-import name.eskildsen.zoneminder.IZoneMinderHttpSession;
 
-import name.eskildsen.zoneminder.api.ZoneMinderDiskUsage;
-import name.eskildsen.zoneminder.api.ZoneMinderCoreData;
-import name.eskildsen.zoneminder.api.config.ZoneMinderConfig;
-import name.eskildsen.zoneminder.api.config.ZoneMinderConfigEnum;
-import name.eskildsen.zoneminder.api.daemon.ZoneMinderHostDaemonStatus;
-import name.eskildsen.zoneminder.api.daemon.ZoneMinderMonitorDaemonStatus;
-import name.eskildsen.zoneminder.api.host.ZoneMinderHostLoad;
-import name.eskildsen.zoneminder.api.host.ZoneMinderHostVersion;
 import name.eskildsen.zoneminder.api.monitor.ZoneMinderMonitorData;
+import name.eskildsen.zoneminder.common.ZoneMinderConfigEnum;
+import name.eskildsen.zoneminder.common.ZoneMinderServerConstants;
+import name.eskildsen.zoneminder.data.IMonitorDataGeneral;
+import name.eskildsen.zoneminder.data.IZoneMinderDaemonStatus;
+import name.eskildsen.zoneminder.data.IZoneMinderDiskUsage;
+import name.eskildsen.zoneminder.data.IZoneMinderHostLoad;
+import name.eskildsen.zoneminder.data.IZoneMinderHostVersion;
+import name.eskildsen.zoneminder.data.ZoneMinderConfig;
+import name.eskildsen.zoneminder.data.ZoneMinderConfigImpl;
+import name.eskildsen.zoneminder.data.ZoneMinderCoreData;
+import name.eskildsen.zoneminder.data.ZoneMinderDiskUsage;
+import name.eskildsen.zoneminder.data.ZoneMinderHostDaemonStatus;
+import name.eskildsen.zoneminder.data.ZoneMinderHostLoad;
+import name.eskildsen.zoneminder.data.ZoneMinderHostVersion;
+import name.eskildsen.zoneminder.data.ZoneMinderMonitorDaemonStatus;
 import name.eskildsen.zoneminder.exception.ZoneMinderAuthenticationException;
 import name.eskildsen.zoneminder.exception.ZoneMinderGeneralException;
 import name.eskildsen.zoneminder.exception.ZoneMinderInvalidData;
+import name.eskildsen.zoneminder.exception.ZoneMinderResponseException;
 import name.eskildsen.zoneminder.exception.ZoneMinderUrlNotFoundException;
-import name.eskildsen.zoneminder.exception.http.ZoneMinderResponseException;
 
 public class ZoneMinderServerProxy  extends ZoneMinderGenericProxy implements IZoneMinderServer {
 	
@@ -88,7 +90,7 @@ public class ZoneMinderServerProxy  extends ZoneMinderGenericProxy implements IZ
 		ZoneMinderContentResponse response = null;
 		//TODO Hardcoded value
         response = getConnection().getPageContent(buildUriApi( replaceParameter(ZoneMinderServerConstants.SUBPATH_API_SERVER_GET_CONFIG_JSON, "ConfigId", configEnum.name())));
-        return ZoneMinderCoreData.createFromJson(response.getContentAsJsonObject().getAsJsonObject("config").getAsJsonObject("Config"),response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderConfig.class);
+        return (ZoneMinderConfig)IZoneMinderResponse.createFromJson(response.getContentAsJsonObject().getAsJsonObject("config").getAsJsonObject("Config"),response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderConfigImpl.class);
 
 	}
 
@@ -120,12 +122,12 @@ public class ZoneMinderServerProxy  extends ZoneMinderGenericProxy implements IZ
 		for (Map.Entry<String, JsonElement> entry : entries) {
 			if (entry.getKey().equalsIgnoreCase(id)) {
 				JsonObject object = (JsonObject) entry.getValue();
-				return ZoneMinderCoreData.createFromJson(jsonObject, response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderDiskUsage.class);
+				return IZoneMinderResponse.createFromJson(jsonObject, response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderDiskUsage.class);
 			}
 		}
 
 		//Just return response codes from call
-		return ZoneMinderCoreData.createFromJson(null, response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderDiskUsage.class);
+		return IZoneMinderResponse.createFromJson(null, response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderDiskUsage.class);
 		//return (IZoneMinderDiskUsage)convertToClass(null, ZoneMinderDiskUsage.class);
 
 	}
@@ -154,7 +156,7 @@ public class ZoneMinderServerProxy  extends ZoneMinderGenericProxy implements IZ
 	{
 		ZoneMinderContentResponse response = null;
         response = getConnection().getPageContent(buildUriApi( ZoneMinderServerConstants.SUBPATH_API_HOST_VERSION_JSON));
-        return ZoneMinderCoreData.createFromJson(response.getContentAsJsonObject(),response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderHostVersion.class);
+        return IZoneMinderResponse.createFromJson(response.getContentAsJsonObject(),response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderHostVersion.class);
 	}
 
 
@@ -174,7 +176,7 @@ public class ZoneMinderServerProxy  extends ZoneMinderGenericProxy implements IZ
 	{
 		ZoneMinderContentResponse response = null;
         response = getConnection().getPageContent(buildUriApi( ZoneMinderServerConstants.SUBPATH_API_HOST_CPULOAD_JSON ));
-        return ZoneMinderCoreData.createFromJson(response.getContentAsJsonObject(),response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderHostLoad.class);
+        return IZoneMinderResponse.createFromJson(response.getContentAsJsonObject(),response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderHostLoad.class);
 	}
 
 	public  boolean isDaemonRunning()  { 
@@ -194,7 +196,7 @@ public class ZoneMinderServerProxy  extends ZoneMinderGenericProxy implements IZ
         ZoneMinderContentResponse response = null;
         try {
         	response = getConnection().getPageContent(buildUriApi( ZoneMinderServerConstants.SUBPATH_API_HOST_DAEMON_CHECKSTATE ));
-            return ZoneMinderCoreData.createFromJson(response.getContentAsJsonObject(),response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderHostDaemonStatus.class);
+            return IZoneMinderResponse.createFromJson(response.getContentAsJsonObject(),response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderHostDaemonStatus.class);
             
         } catch (IOException e) {
         	return null;
@@ -225,7 +227,7 @@ public class ZoneMinderServerProxy  extends ZoneMinderGenericProxy implements IZ
         	JsonArray arrMonitorJson = response.getContentAsJsonObject().getAsJsonArray("monitors");	
         	for (JsonElement cur : arrMonitorJson) {
     			//TODO Fix Hardcoded Object Id
-    			ZoneMinderMonitorData monitorData = ZoneMinderCoreData.createFromJson(((JsonObject)cur).getAsJsonObject("Monitor"), response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderMonitorData.class);
+    			ZoneMinderMonitorData monitorData = IZoneMinderResponse.createFromJson(((JsonObject)cur).getAsJsonObject("Monitor"), response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderMonitorData.class);
     			arrMonitor.add(monitorData);
     		}
         } catch (IOException e) {

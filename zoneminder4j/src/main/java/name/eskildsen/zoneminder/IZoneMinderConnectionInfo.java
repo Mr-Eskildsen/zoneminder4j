@@ -8,56 +8,18 @@ import java.util.Map;
 
 import javax.ws.rs.core.UriBuilderException;
 
-import name.eskildsen.zoneminder.api.exception.ZoneMinderAuthHashNotEnabled;
+import name.eskildsen.zoneminder.exception.ZoneMinderAuthHashNotEnabled;
 import name.eskildsen.zoneminder.exception.ZoneMinderAuthenticationException;
 import name.eskildsen.zoneminder.exception.ZoneMinderException;
 import name.eskildsen.zoneminder.exception.ZoneMinderGeneralException;
+import name.eskildsen.zoneminder.exception.ZoneMinderResponseException;
 import name.eskildsen.zoneminder.exception.ZoneMinderStreamConfigException;
-import name.eskildsen.zoneminder.exception.http.ZoneMinderResponseException;
 import name.eskildsen.zoneminder.general.ProtocolType;
 import name.eskildsen.zoneminder.jetty.JettyQueryParameter;
 
 
 public interface IZoneMinderConnectionInfo {
-/*	public String getProtocolName();
 
-	public ProtocolType getProtocolType();
-
-	public String getHostName();
-
-	public Integer getHttpPort();
-
-	public Integer getTelnetPort();
-
-	public String getUserName();
-
-	public String getPassword();
-
-	public String getLoggerId();
-
-	public URI getZoneMinderRootUri_() throws MalformedURLException;
-	public URI getZoneMinderPortalUri() throws MalformedURLException;
-
-	public Integer getTimeout();
-
-	public URI buildZoneMinderPortalUri(String subPath) throws MalformedURLException;
-	
-	public URI getZoneMinderApiBaseUri() throws MalformedURLException;
-	public URI buildZoneMinderApiUri(String subPath) throws MalformedURLException;
-
-
-	String getConfigAuthenticationHashSecret();
-	boolean isAuthenticationHashAllowed();
-
-	boolean isAuthenticationEnabled();
-	boolean isApiEnabled();
-
-	
-	public String printDebug();
-	
-	//TODO:: FIX LOGGER
-	//public void setLogLevel(LogLevel level);
-*/
 	public String getProtocolName();
 	public ProtocolType getProtocolType();
 	public String getHostName();

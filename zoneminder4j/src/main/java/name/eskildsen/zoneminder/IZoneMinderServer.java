@@ -12,20 +12,26 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import name.eskildsen.zoneminder.api.ZoneMinderDiskUsage;
-import name.eskildsen.zoneminder.api.config.ZoneMinderConfig;
-import name.eskildsen.zoneminder.api.config.ZoneMinderConfigEnum;
-import name.eskildsen.zoneminder.api.daemon.ZoneMinderDaemonType;
-import name.eskildsen.zoneminder.api.daemon.ZoneMinderHostDaemonStatus;
-import name.eskildsen.zoneminder.api.host.ZoneMinderHostLoad;
-import name.eskildsen.zoneminder.api.host.ZoneMinderHostVersion;
 import name.eskildsen.zoneminder.api.monitor.ZoneMinderMonitorData;
+import name.eskildsen.zoneminder.common.ZoneMinderConfigEnum;
+import name.eskildsen.zoneminder.common.ZoneMinderDaemonType;
+import name.eskildsen.zoneminder.common.ZoneMinderServerConstants;
+import name.eskildsen.zoneminder.data.IMonitorDataGeneral;
+import name.eskildsen.zoneminder.data.IZoneMinderDaemonStatus;
+import name.eskildsen.zoneminder.data.IZoneMinderDiskUsage;
+import name.eskildsen.zoneminder.data.IZoneMinderHostLoad;
+import name.eskildsen.zoneminder.data.IZoneMinderHostVersion;
+import name.eskildsen.zoneminder.data.ZoneMinderConfig;
+import name.eskildsen.zoneminder.data.ZoneMinderConfigImpl;
+import name.eskildsen.zoneminder.data.ZoneMinderDiskUsage;
+import name.eskildsen.zoneminder.data.ZoneMinderHostDaemonStatus;
+import name.eskildsen.zoneminder.data.ZoneMinderHostLoad;
+import name.eskildsen.zoneminder.data.ZoneMinderHostVersion;
 import name.eskildsen.zoneminder.exception.ZoneMinderAuthenticationException;
 import name.eskildsen.zoneminder.exception.ZoneMinderGeneralException;
 import name.eskildsen.zoneminder.exception.ZoneMinderInvalidData;
+import name.eskildsen.zoneminder.exception.ZoneMinderResponseException;
 import name.eskildsen.zoneminder.exception.ZoneMinderUrlNotFoundException;
-import name.eskildsen.zoneminder.exception.http.ZoneMinderResponseException;
-import name.eskildsen.zoneminder.internal.ZoneMinderServerConstants;
 
 
 public interface IZoneMinderServer /*extends IZoneMinderResponse*/ {

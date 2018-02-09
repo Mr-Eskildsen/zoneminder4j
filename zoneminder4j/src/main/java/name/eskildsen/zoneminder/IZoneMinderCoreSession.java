@@ -6,9 +6,9 @@ import java.util.List;
 
 import javax.security.auth.login.FailedLoginException;
 
-import name.eskildsen.zoneminder.api.exception.ZoneMinderAuthHashNotEnabled;
+import name.eskildsen.zoneminder.common.ZoneMinderPageTypeEnum;
+import name.eskildsen.zoneminder.exception.ZoneMinderAuthHashNotEnabled;
 import name.eskildsen.zoneminder.exception.ZoneMinderUrlNotFoundException;
-import name.eskildsen.zoneminder.general.ZoneMinderPageTypeEnum;
 
 
 public interface IZoneMinderCoreSession {

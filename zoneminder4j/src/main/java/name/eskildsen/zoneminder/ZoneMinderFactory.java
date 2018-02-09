@@ -3,16 +3,16 @@ package name.eskildsen.zoneminder;
 
 import java.net.MalformedURLException;
 
+import name.eskildsen.zoneminder.common.ZoneMinderServerConstants;
 import name.eskildsen.zoneminder.event.ZoneMinderEventManager;
 import name.eskildsen.zoneminder.exception.ZoneMinderApiNotEnabledException;
 import name.eskildsen.zoneminder.exception.ZoneMinderAuthenticationException;
 import name.eskildsen.zoneminder.exception.ZoneMinderGeneralException;
 import name.eskildsen.zoneminder.internal.ZoneMinderMonitorProxy;
-import name.eskildsen.zoneminder.internal.ZoneMinderServerConstants;
 import name.eskildsen.zoneminder.internal.ZoneMinderServerProxy;
 import name.eskildsen.zoneminder.jetty.JettyConnectionInfo;
 
-public class ZoneMinderFactory {
+public interface ZoneMinderFactory {
 
 	public static String getDefaultPortalSubpath()
 	{
@@ -44,10 +44,10 @@ public class ZoneMinderFactory {
 */
 	
 	public static IZoneMinderConnectionHandler CreateConnection(String protocol, String hostName, Integer portHttp, Integer portTelnet, String userName,
-            String password, String zmPortalSubPath, String zmApiSubPath, Integer timeout) throws ZoneMinderApiNotEnabledException, ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException {
+            String password, String streamingUserName, String streamingPassword,  String zmPortalSubPath, String zmApiSubPath, Integer timeout) throws ZoneMinderApiNotEnabledException, ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException {
 		
 		//return new ZoneMinderConnectionInfo(protocol, hostName, portHttp, portTelnet, userName, password, zmPortalSubPath, zmApiSubPath, timeout, null );
-		JettyConnectionInfo jci =new JettyConnectionInfo(protocol, hostName, portHttp, portTelnet, userName, password, zmPortalSubPath, zmApiSubPath, timeout);
+		JettyConnectionInfo jci =new JettyConnectionInfo(protocol, hostName, portHttp, portTelnet, userName, password, streamingUserName, streamingPassword,  zmPortalSubPath, zmApiSubPath, timeout);
 		if (jci.connect()) {
 			return jci;	
 		}
@@ -55,7 +55,7 @@ public class ZoneMinderFactory {
 		 
 	}
 
-	@Deprecated
+/*	@Deprecated
 	protected static IZoneMinderConnectionInfo CreateConnection_OLD(String protocol, String hostName, Integer portHttp, Integer portTelnet, String userName,
             String password, String zmPortalSubPath, String zmApiSubPath, Integer timeout) throws ZoneMinderApiNotEnabledException, ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException {
 		
@@ -67,7 +67,7 @@ public class ZoneMinderFactory {
 		return null;
 		 
 	}
-
+*/
 	/*//REMOVED BECAUSE JETTY Impolementation
 	public static IZoneMinderConnectionInfo CreateConnection(String protocol, String hostName, Integer portHttp, Integer portTelnet, String userName,
             String password, String zmPortalSubPath, String zmApiSubPath, Integer timeout, String loggerId) throws FailedLoginException, IllegalArgumentException, IOException, ZoneMinderUrlNotFoundException, ZoneMinderApiNotEnabledException, ZoneMinderAuthenticationException, ZoneMinderGeneralException  {

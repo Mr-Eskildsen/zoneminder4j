@@ -11,6 +11,8 @@ import name.eskildsen.zoneminder.exception.ZoneMinderGeneralException;
 import name.eskildsen.zoneminder.exception.ZoneMinderStreamConfigException;
 import name.eskildsen.zoneminder.jetty.JettyQueryParameter;
 
+//IS Referenced
+
 @Deprecated
 public interface IZoneMinderHttpSession extends IZoneMinderCoreSession {
 

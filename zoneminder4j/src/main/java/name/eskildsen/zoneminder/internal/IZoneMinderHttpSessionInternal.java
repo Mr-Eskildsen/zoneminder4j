@@ -11,8 +11,8 @@ import javax.ws.rs.core.UriBuilderException;
 import name.eskildsen.zoneminder.IZoneMinderHttpSession;
 import name.eskildsen.zoneminder.exception.ZoneMinderAuthenticationException;
 import name.eskildsen.zoneminder.exception.ZoneMinderGeneralException;
+import name.eskildsen.zoneminder.exception.ZoneMinderResponseException;
 import name.eskildsen.zoneminder.exception.ZoneMinderStreamConfigException;
-import name.eskildsen.zoneminder.exception.http.ZoneMinderResponseException;
 
 public interface IZoneMinderHttpSessionInternal extends IZoneMinderHttpSession {
 	

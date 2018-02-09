@@ -26,7 +26,7 @@ import com.google.gson.JsonParser;
 import name.eskildsen.zoneminder.IZoneMinderResponse;
 import name.eskildsen.zoneminder.exception.ZoneMinderGeneralException;
 import name.eskildsen.zoneminder.exception.ZoneMinderInvalidData;
-import name.eskildsen.zoneminder.exception.http.ZoneMinderResponseException;
+import name.eskildsen.zoneminder.exception.ZoneMinderResponseException;
 
 public class ZoneMinderContentResponse extends BufferingResponseListener
 		//implements SuccessListener, FailureListener, ContentListener, CompleteListener

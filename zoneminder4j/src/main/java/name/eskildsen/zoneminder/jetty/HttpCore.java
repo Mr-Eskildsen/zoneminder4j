@@ -5,7 +5,7 @@ import java.net.URI;
 
 import javax.ws.rs.core.UriBuilder;
 
-import name.eskildsen.zoneminder.internal.ZoneMinderServerConstants;
+import name.eskildsen.zoneminder.common.ZoneMinderServerConstants;
 
 public class HttpCore {
 

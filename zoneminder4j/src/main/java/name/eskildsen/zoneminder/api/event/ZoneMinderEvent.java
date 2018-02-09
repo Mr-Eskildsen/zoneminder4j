@@ -4,8 +4,8 @@ import javax.annotation.Generated;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-import name.eskildsen.zoneminder.IZoneMinderEventData;
-import name.eskildsen.zoneminder.api.ZoneMinderCoreData;
+import name.eskildsen.zoneminder.data.IZoneMinderEventData;
+import name.eskildsen.zoneminder.data.ZoneMinderCoreData;
 
 public class ZoneMinderEvent extends ZoneMinderCoreData implements IZoneMinderEventData {
 

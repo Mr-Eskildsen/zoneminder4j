@@ -7,7 +7,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import name.eskildsen.zoneminder.IZoneMinderConnectionInfo;
-import name.eskildsen.zoneminder.api.exception.ZoneMinderAuthHashNotEnabled;
+import name.eskildsen.zoneminder.exception.ZoneMinderAuthHashNotEnabled;
 import name.eskildsen.zoneminder.exception.ZoneMinderAuthenticationException;
 import name.eskildsen.zoneminder.exception.ZoneMinderGeneralException;
 import name.eskildsen.zoneminder.exception.ZoneMinderStreamConfigException;

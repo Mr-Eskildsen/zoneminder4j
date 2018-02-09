@@ -4,15 +4,14 @@ package name.eskildsen.zoneminder.api.monitor;
 import java.io.ByteArrayOutputStream;
 import java.net.URI;
 
-import name.eskildsen.zoneminder.IMonitorDataStillImage;
-import name.eskildsen.zoneminder.api.ZoneMinderCoreData;
+import name.eskildsen.zoneminder.data.IMonitorDataStillImage;
+import name.eskildsen.zoneminder.data.ZoneMinderCoreData;
 
 public class ZoneMinderMonitorImage extends ZoneMinderCoreData implements IMonitorDataStillImage{
 	private String id = "";
 	private ByteArrayOutputStream image = null;
+
 	
-	//public ZoneMinderMonitorImage(String id, ByteArrayOutputStream image, int responseCode, String responseMessage, String requestUrl ) {
-	//super(responseCode, responseMessage, requestUrl);
 	public ZoneMinderMonitorImage(String id, int httpStatus, String httpMessage, URI httpURI) {
 		super(httpStatus, httpMessage, httpURI);
 		this.id = id;

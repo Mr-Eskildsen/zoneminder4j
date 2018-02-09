@@ -16,11 +16,12 @@ import javax.ws.rs.core.UriBuilderException;
 
 import name.eskildsen.zoneminder.IZoneMinderConnectionHandler;
 import name.eskildsen.zoneminder.IZoneMinderConnectionInfo;
-import name.eskildsen.zoneminder.api.exception.ZoneMinderAuthHashNotEnabled;
+import name.eskildsen.zoneminder.common.HashAuthenticationEnum;
 import name.eskildsen.zoneminder.exception.ZoneMinderApiNotEnabledException;
+import name.eskildsen.zoneminder.exception.ZoneMinderAuthHashNotEnabled;
 import name.eskildsen.zoneminder.exception.ZoneMinderAuthenticationException;
 import name.eskildsen.zoneminder.exception.ZoneMinderGeneralException;
-import name.eskildsen.zoneminder.exception.http.ZoneMinderResponseException;
+import name.eskildsen.zoneminder.exception.ZoneMinderResponseException;
 import name.eskildsen.zoneminder.general.ProtocolType;
 import name.eskildsen.zoneminder.general.Tools;
 import name.eskildsen.zoneminder.jetty.HttpCore;
@@ -40,6 +41,8 @@ public abstract class GenericConnectionHandler extends HttpCore implements IZone
 	private Integer portTelnet;
 	private String _userName;
 	private String _password;
+	private String _streamingUserName;
+	private String _streamingPassword;
 	private Integer timeout = DEFAULT_TIMEOUT;
 	private String zoneMinderPortalPath = "";
 	private String zoneMinderApiPath = "";
@@ -65,7 +68,8 @@ public abstract class GenericConnectionHandler extends HttpCore implements IZone
 	private boolean useAuthentication = false;
 	private boolean allowHashSecrets = false;
 	private String  authenticationHashSecret = null;
-	private String authticationHashRelayMethod = "";
+	private String authticationHashRelayMethod_ = "";
+	private HashAuthenticationEnum authticationHashRelayMethod;
 	private boolean authticationHashUseIps = false;
     
 	private Date authHashExpires = null;
@@ -93,16 +97,24 @@ public abstract class GenericConnectionHandler extends HttpCore implements IZone
 		}
 	}
 
+	protected void setStreamingUserName(String username) {
+		_streamingUserName = username;
+	}
+
+	protected void setStreamingPassword(String password) {
+		_streamingPassword = password;
+	}
+
 
 	//protected abstract String getCgiBinPath();
 
 	public GenericConnectionHandler(String protocol, String hostName, Integer portHttp, Integer portTelnet, String userName,
-         String password, String zmPortalSubPath, String zmApiSubPath, Integer timeout ) throws ZoneMinderApiNotEnabledException, ZoneMinderAuthenticationException {
+         String password, String streamingUserName, String streamingPassword, String zmPortalSubPath, String zmApiSubPath, Integer timeout ) throws ZoneMinderApiNotEnabledException, ZoneMinderAuthenticationException {
 
-		Initialize(protocol, hostName, portHttp, portTelnet, userName, password, zmPortalSubPath, zmApiSubPath, timeout);
+		Initialize(protocol, hostName, portHttp, portTelnet, userName, password, streamingUserName, streamingPassword, zmPortalSubPath, zmApiSubPath, timeout);
 	}
 
-	public GenericConnectionHandler(String protocol, String hostName, String userName, String password, String zmPortalSubPath, String zmApiSubPath) throws ZoneMinderApiNotEnabledException, ZoneMinderAuthenticationException /*throws GeneralSecurityException */{
+	public GenericConnectionHandler(String protocol, String hostName, String userName, String password, String streamingUserName, String streamingPassword, String zmPortalSubPath, String zmApiSubPath) throws ZoneMinderApiNotEnabledException, ZoneMinderAuthenticationException /*throws GeneralSecurityException */{
 		int port = DEFAULT_HTTP_PORT;
  	
  		if (protocol.equalsIgnoreCase("https"))
@@ -110,7 +122,7 @@ public abstract class GenericConnectionHandler extends HttpCore implements IZone
 	 		port = DEFAULT_HTTPS_PORT;
 	 	}
 
-		Initialize(protocol, hostName, port, DEFAULT_TELNET_PORT, userName, password, zmPortalSubPath, zmApiSubPath, DEFAULT_TIMEOUT);
+		Initialize(protocol, hostName, port, DEFAULT_TELNET_PORT, userName, password, streamingUserName, streamingPassword, zmPortalSubPath, zmApiSubPath, DEFAULT_TIMEOUT);
 		
 	}
 
@@ -134,7 +146,7 @@ public abstract class GenericConnectionHandler extends HttpCore implements IZone
 	protected abstract void onDisconnect() throws Throwable;
 	
 	protected void Initialize(String protocol, String hostName, Integer portHttp, Integer portTelnet, String userName,
-			String password, String zmPortalSubPath, String zmApiSubPath, Integer timeout) throws ZoneMinderApiNotEnabledException, ZoneMinderAuthenticationException {
+			String password, String streamingUserName, String streamingPassword, String zmPortalSubPath, String zmApiSubPath, Integer timeout) throws ZoneMinderApiNotEnabledException, ZoneMinderAuthenticationException {
 		if ((portHttp == null) || (portHttp == 0)) {
 			if (protocol.equalsIgnoreCase("https")) {
 				portHttp = DEFAULT_HTTPS_PORT;
@@ -156,13 +168,9 @@ public abstract class GenericConnectionHandler extends HttpCore implements IZone
 
 		setUserName(userName);
 		setPassword(password);
+		setStreamingUserName(streamingUserName);
+		setStreamingPassword(streamingPassword);
 		this.timeout = timeout;
-		// TODO:: KILL LOGGER		
-		//this.loggerId = loggerId;
-		// TODO:: KILL LOGGER
-		// this.logLevel = LogLevel.NONE;
-
-		
 	}
 
 	
@@ -175,53 +183,128 @@ public abstract class GenericConnectionHandler extends HttpCore implements IZone
 	
 	
 	
-	
+	@Override
 	public String getProtocolName() {
 		return protocol.name();
 	}
 
+	@Override
 	public ProtocolType getProtocolType() {
 		return protocol;
 	}
-
+	
+	@Override
 	public String getHostName() {
 		return hostName;
 	}
 
+	@Override
 	public Integer getHttpPort() {
 		return portHttp;
 	}
 
+	@Override
 	public Integer getTelnetPort() {
 		return portTelnet;
 	}
 
+	@Override
 	public String getUserName() {
 		return _userName;
 	}
 
+	@Override
 	public String getPassword() {
 		return _password;
 	}
 
-	public String getZoneMinderPortalPath() {
-		return zoneMinderPortalPath;
-	}
 
-	public String getZoneMinderApiPath() {
-		return zoneMinderApiPath;
-	}
-	
-	
-	public String getZoneMinderStreamingPath() {
-		return zoneMinderZmsPath;
-	}
-	
-	public Integer getTimeout() {
-		return timeout;
+	@Override
+	public String getStreamingUserName() {
+		if (_streamingUserName == null) {
+			return getUserName();
+		}
+		return _streamingUserName;
 	}
 
 
+	@Override
+	public String getStreamingPassword() {
+		
+		if (_streamingPassword == null) {
+			return getPassword();
+		}
+		return _streamingPassword;
+	}
+	
+	@Override
+	public boolean getAuthenticationHashAllowed() 						{return allowHashSecrets;}
+	@Override
+	public HashAuthenticationEnum getAuthenticationHashReleayMethod()	{return authticationHashRelayMethod;}
+
+	@Override
+	public boolean getAuthenticationHashUseIp() {
+		return authticationHashUseIps;
+	}
+	
+	@Override
+	public String getConfigAuthenticationHashSecret() {
+		return this.authenticationHashSecret;
+	}
+
+	/*@Override
+	public boolean isAuthenticationHashAllowed() {
+		return (getAuthenticationHashReleayMethod()==HashAuthenticationEnum.Hashed && getAuthenticationHashAllowed());
+	}
+	*/
+	@Override
+	public boolean isAuthenticationEnabled() {
+		return useAuthentication;
+	}
+
+	@Override
+	public boolean isApiEnabled() {
+		return isApiEnabled;
+	}
+
+	@Override
+	public boolean isTriggerOptionEnabled() {
+		return triggerOptionEnabled;
+	}
+
+	@Override
+	public URI getPortalUri() throws MalformedURLException {
+		return UriBuilder.fromUri(
+				(new URL(getProtocolName(), getHostName(), getHttpPort(), getZoneMinderPortalPath())).toString())
+				.build();
+	}
+	
+	@Override
+	public URI getApiUri() throws MalformedURLException {
+		return UriBuilder
+				.fromUri((new URL(getProtocolName(), getHostName(), getHttpPort(), getZoneMinderApiPath())).toString())
+				.build();
+	}
+	
+	@Override
+	public URI getZmsNphUri() throws MalformedURLException {
+		return UriBuilder.fromUri(
+				(new URL(getProtocolName(), getHostName(), getHttpPort(), getZoneMinderStreamingPath())).toString())
+				.build();
+	}
+	
+
+	
+	
+	protected Integer getTimeout() {return timeout;}
+
+
+	protected String getZoneMinderPortalPath() {return zoneMinderPortalPath;}
+	protected String getZoneMinderApiPath() {return zoneMinderApiPath;}
+	protected String getZoneMinderStreamingPath() {return zoneMinderZmsPath;}
+
+
+	
 	/***
 	 * 
 	 * HTTP Basic operations
@@ -245,59 +328,8 @@ public abstract class GenericConnectionHandler extends HttpCore implements IZone
 	
 	protected void setAuthenticationHashAllowed(boolean allowHashSecrets) {this.allowHashSecrets = allowHashSecrets;}
 	protected void setAuthenticationHashSecret(String authHashSecret) {this.authenticationHashSecret = authHashSecret;}
-	protected void setAuthenticationHashReleayMethod(String authRelayMethod) {this.authticationHashRelayMethod = authRelayMethod;}
+	protected void setAuthenticationHashReleayMethod(String authRelayMethod) {this.authticationHashRelayMethod = HashAuthenticationEnum.getEnum(authRelayMethod);}
 	protected void setAuthenticationHashUseIp(boolean useIp) {this.authticationHashUseIps = useIp;}
-	
-	
-	@Override
-	public boolean getAuthenticationHashUseIp() {
-		return authticationHashUseIps;
-	}
-	
-	@Override
-	public String getConfigAuthenticationHashSecret() {
-		return this.authenticationHashSecret;
-	}
-
-	@Override
-	public boolean isAuthenticationHashAllowed() {
-		return (authticationHashRelayMethod.equalsIgnoreCase("none") && allowHashSecrets);
-	}
-	
-	@Override
-	public boolean isAuthenticationEnabled() {
-		return useAuthentication;
-	}
-
-	@Override
-	public boolean isApiEnabled() {
-		return isApiEnabled;
-	}
-
-	@Override
-	public boolean isTriggerOptionEnabled() {
-		return triggerOptionEnabled;
-	}
-
-	@Override
-	public URI getPortalUri() throws MalformedURLException {
-		return UriBuilder.fromUri(
-				(new URL(getProtocolName(), getHostName(), getHttpPort(), getZoneMinderPortalPath())).toString())
-				.build();
-	}
-	@Override
-	public URI getApiUri() throws MalformedURLException {
-		return UriBuilder
-				.fromUri((new URL(getProtocolName(), getHostName(), getHttpPort(), getZoneMinderApiPath())).toString())
-				.build();
-	}
-	
-	@Override
-	public URI getZmsNphUri() throws MalformedURLException {
-		return UriBuilder.fromUri(
-				(new URL(getProtocolName(), getHostName(), getHttpPort(), getZoneMinderStreamingPath())).toString())
-				.build();
-	}
 	
 
 	
@@ -359,10 +391,11 @@ public abstract class GenericConnectionHandler extends HttpCore implements IZone
 	public String getAuthHashToken() throws ZoneMinderAuthHashNotEnabled {
 
 		
-		if (isAuthenticationHashAllowed()==true) {
+
+		//If we used hashed pasword and Relay method is Hashed -> Maintain hashed password
+		if (getAuthenticationHashAllowed() && getAuthenticationHashReleayMethod()==HashAuthenticationEnum.Hashed) {
 
 			Date now = new Date();
-			
 			if ((authGeneratedHash == "") || (!authHashExpires.after(now))) {
 				authGeneratedHash = generateAuthenticationHash();
 			}
@@ -372,21 +405,22 @@ public abstract class GenericConnectionHandler extends HttpCore implements IZone
 		throw new ZoneMinderAuthHashNotEnabled();
 	}
 	
-	protected String generateAuthenticationHash() throws ZoneMinderAuthHashNotEnabled
+	private String generateAuthenticationHash() throws ZoneMinderAuthHashNotEnabled
 	{
 		// $authKey = ZM_AUTH_HASH_SECRET.$user['Username'].$user['Password'].$remoteAddr.$time[2].$time[3].$time[4].$time[5];
 		
 		try {
-			
+			//https://github.com/ZoneMinder/ZoneMinder/blob/master/web/includes/functions.php#L129
 			String seed = "";
 			//TODO Also check for IP adresses!
 			Calendar calendar = Calendar.getInstance();
 			
 			if (getAuthenticationHashUseIp()) {
-				seed = String.format("%s.%s.%s.%s.%d.%d.%d.%d", getConfigAuthenticationHashSecret(), getUserName(), getPassword(), getLocalHostLANAddress().getHostAddress(), calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.DAY_OF_MONTH), calendar.get(Calendar.MONTH) + 1, calendar.get(Calendar.YEAR));
+//				seed = String.format("%s.%s.%s.%s.%d.%d.%d.%d", getConfigAuthenticationHashSecret(), getUserName(), getPassword(), getLocalHostLANAddress().getHostAddress(), calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.DAY_OF_MONTH), calendar.get(Calendar.MONTH) + 1, calendar.get(Calendar.YEAR));
+				seed = String.format("%s%s%s%s%d%d%d%d", getConfigAuthenticationHashSecret(), getStreamingUserName(), getStreamingPassword(), getLocalHostLANAddress().getHostAddress(), calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.DAY_OF_MONTH), calendar.get(Calendar.MONTH), calendar.get(Calendar.YEAR)-1900);
 			}
 			else {
-				seed = String.format("%s.%s.%s.%d.%d.%d.%d", getConfigAuthenticationHashSecret(), getUserName(), getPassword(), calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.DAY_OF_MONTH), calendar.get(Calendar.MONTH) + 1, calendar.get(Calendar.YEAR));
+				seed = String.format("%s%s%s%d%d%d%d", getConfigAuthenticationHashSecret(), getStreamingUserName(), getStreamingPassword(), calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.DAY_OF_MONTH), calendar.get(Calendar.MONTH), calendar.get(Calendar.YEAR)-1900);
 			}
 			java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
 			byte[] array = md.digest(seed.getBytes());
@@ -396,7 +430,7 @@ public abstract class GenericConnectionHandler extends HttpCore implements IZone
 			}
 			calendar.setTime(new Date()); // sets calendar time/date
 
-			calendar.add(Calendar.MINUTE, 60); // adds 60 minutes, to force recalculation after one hour
+			calendar.add(Calendar.MINUTE, 5); // adds 60 minutes, to force recalculation after one hour
 			authHashExpires = calendar.getTime();
 		    
 		    return generatedHash.toString();

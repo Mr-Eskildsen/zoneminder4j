@@ -8,10 +8,10 @@ import com.google.gson.JsonObject;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-import name.eskildsen.zoneminder.IMonitorDataGeneral;
-import name.eskildsen.zoneminder.api.ZoneMinderCoreData;
 import name.eskildsen.zoneminder.common.ZoneMinderMonitorFunctionEnum;
 import name.eskildsen.zoneminder.common.ZoneMinderMonitorSourceTypeEnum;
+import name.eskildsen.zoneminder.data.IMonitorDataGeneral;
+import name.eskildsen.zoneminder.data.ZoneMinderCoreData;
 
 public class ZoneMinderMonitorData extends ZoneMinderCoreData implements IMonitorDataGeneral {
 

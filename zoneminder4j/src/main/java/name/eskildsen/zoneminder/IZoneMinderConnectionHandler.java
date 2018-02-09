@@ -6,12 +6,14 @@ import java.util.List;
 
 
 import org.eclipse.jetty.http.HttpMethod;
+import org.eclipse.jetty.util.Fields;
 
-import name.eskildsen.zoneminder.api.exception.ZoneMinderAuthHashNotEnabled;
+import name.eskildsen.zoneminder.common.HashAuthenticationEnum;
+import name.eskildsen.zoneminder.exception.ZoneMinderAuthHashNotEnabled;
 import name.eskildsen.zoneminder.exception.ZoneMinderAuthenticationException;
 import name.eskildsen.zoneminder.exception.ZoneMinderException;
 import name.eskildsen.zoneminder.exception.ZoneMinderGeneralException;
-import name.eskildsen.zoneminder.exception.http.ZoneMinderResponseException;
+import name.eskildsen.zoneminder.exception.ZoneMinderResponseException;
 import name.eskildsen.zoneminder.general.ProtocolType;
 import name.eskildsen.zoneminder.internal.ZoneMinderContentResponse;
 import name.eskildsen.zoneminder.jetty.JettyQueryParameter;
@@ -26,6 +28,13 @@ public interface IZoneMinderConnectionHandler/*extends IZoneMinderConnectionInfo
 	public Integer getTelnetPort();
 	public String getUserName();
 	public String getPassword();
+	
+	public String getStreamingUserName();
+	public String getStreamingPassword();
+	//TODO Only Temporary here
+	//public void setStreamingUserName(String user);
+	//TODO Only Temporary here
+	//public void setStreamingPassword(String password);
 
 	public URI getPortalUri() throws MalformedURLException;
 	public URI getApiUri() throws MalformedURLException;
@@ -33,19 +42,12 @@ public interface IZoneMinderConnectionHandler/*extends IZoneMinderConnectionInfo
 
 	
 	public ZoneMinderContentResponse fetchContentResponse(URI uri, HttpMethod httpMethod, List<JettyQueryParameter> parameters ) throws ZoneMinderGeneralException, ZoneMinderResponseException;
-		
-	
-	//public Integer getTimeout();
-
-/*	public URI buildZoneMinderPortalUri(String subPath) throws MalformedURLException;
-	public URI getZoneMinderApiBaseUri() throws MalformedURLException;
-	public URI getZoneMinderCgiBinBaseUri() throws MalformedURLException;
-	public URI buildZoneMinderCgiBinUri(String subPath) throws MalformedURLException;
-*/
 
 	
-	boolean isAuthenticationHashAllowed();
 	boolean getAuthenticationHashUseIp();
+	boolean getAuthenticationHashAllowed();
+	HashAuthenticationEnum getAuthenticationHashReleayMethod();
+	
 	String getConfigAuthenticationHashSecret();
 	String getAuthHashToken() throws ZoneMinderAuthHashNotEnabled;
 	
@@ -64,16 +66,9 @@ public interface IZoneMinderConnectionHandler/*extends IZoneMinderConnectionInfo
 	ZoneMinderContentResponse getPageContent(URI url, List<JettyQueryParameter> parameters) throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderResponseException;
 
 	ZoneMinderContentResponse sendPost(URI url, List<JettyQueryParameter> parameters) throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderResponseException, ZoneMinderException;
-	ZoneMinderContentResponse sendPut(URI url, List<JettyQueryParameter> parameters) throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderResponseException, ZoneMinderException;
+	//ZoneMinderContentResponse sendPut(URI url, List<JettyQueryParameter> parameters) throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderResponseException, ZoneMinderException;
+	ZoneMinderContentResponse sendPut(URI uri, Fields fields) throws MalformedURLException, ZoneMinderException;
 
-	/*
-	String getPageContentAsString(URI uri) throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderResponseException;
-	String getPageContentAsString(URI url, List<JettyQueryParameter> parameters) throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderResponseException;
-	
-	ByteArrayOutputStream getPageContentAsByteArray(URI url) throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderResponseException;
-	ByteArrayOutputStream getPageContentAsByteArray(URI url, List<JettyQueryParameter> parameters) throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderResponseException, ZoneMinderStreamConfigException;
-*/	
-	
 	
 
 }
