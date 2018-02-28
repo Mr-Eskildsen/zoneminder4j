@@ -24,11 +24,6 @@ import name.eskildsen.zoneminder.socket.SocketWriter;
 
 public class ZoneMinderEventManager extends ZoneMinderEventNotifier  implements IZoneMinderEventSession {
 
-	//create an object of SingleObject
-	////private static ZoneMinderEventManager instance = new ZoneMinderEventManager();
-	//private ZoneMinderConnectionInfo _connection = null;
-	
-	//private boolean _connected = false;
 	private SocketWriter socketWriter = null;
 	
 	public ZoneMinderEventManager()

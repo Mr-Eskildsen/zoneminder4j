@@ -8,13 +8,13 @@ import java.util.Map;
 
 import javax.ws.rs.core.UriBuilderException;
 
-import name.eskildsen.zoneminder.IZoneMinderHttpSession;
+import name.eskildsen.zoneminder.IZoneMinderHttpSession_NA;
 import name.eskildsen.zoneminder.exception.ZoneMinderAuthenticationException;
 import name.eskildsen.zoneminder.exception.ZoneMinderGeneralException;
 import name.eskildsen.zoneminder.exception.ZoneMinderResponseException;
 import name.eskildsen.zoneminder.exception.ZoneMinderStreamConfigException;
 
-public interface IZoneMinderHttpSessionInternal extends IZoneMinderHttpSession {
+public interface IZoneMinderHttpSessionInternal extends IZoneMinderHttpSession_NA {
 	
 	//TODO REDIRECTS TO ConnectionInfo
 	public String getPageContent(String url) throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderResponseException, IllegalArgumentException, UriBuilderException;

@@ -31,10 +31,6 @@ public interface IZoneMinderConnectionHandler/*extends IZoneMinderConnectionInfo
 	
 	public String getStreamingUserName();
 	public String getStreamingPassword();
-	//TODO Only Temporary here
-	//public void setStreamingUserName(String user);
-	//TODO Only Temporary here
-	//public void setStreamingPassword(String password);
 
 	public URI getPortalUri() throws MalformedURLException;
 	public URI getApiUri() throws MalformedURLException;
@@ -66,7 +62,6 @@ public interface IZoneMinderConnectionHandler/*extends IZoneMinderConnectionInfo
 	ZoneMinderContentResponse getPageContent(URI url, List<JettyQueryParameter> parameters) throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderResponseException;
 
 	ZoneMinderContentResponse sendPost(URI url, List<JettyQueryParameter> parameters) throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderResponseException, ZoneMinderException;
-	//ZoneMinderContentResponse sendPut(URI url, List<JettyQueryParameter> parameters) throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderResponseException, ZoneMinderException;
 	ZoneMinderContentResponse sendPut(URI uri, Fields fields) throws MalformedURLException, ZoneMinderException;
 
 	

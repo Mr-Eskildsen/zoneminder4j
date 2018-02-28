@@ -15,6 +15,7 @@ import com.google.gson.JsonObject;
 import name.eskildsen.zoneminder.api.event.ZoneMinderEvent;
 import name.eskildsen.zoneminder.api.monitor.ZoneMinderMonitorData;
 import name.eskildsen.zoneminder.api.monitor.ZoneMinderMonitorStatus;
+import name.eskildsen.zoneminder.api.monitor.ZoneMinderMonitorStatusImpl;
 import name.eskildsen.zoneminder.api.telnet.ZoneMinderTelnetRequest;
 import name.eskildsen.zoneminder.common.ZoneMinderMonitorFunctionEnum;
 import name.eskildsen.zoneminder.common.ZoneMinderMonitorStatusEnum;
@@ -37,15 +38,15 @@ import name.eskildsen.zoneminder.internal.ZoneMinderContentResponse;
 import name.eskildsen.zoneminder.jetty.JettyQueryParameter;
 
 
-public interface IZoneMinderMonitor /*extends IZoneMinderResponse*/ {
+public interface IZoneMinderMonitor  {
 
     /** *****************************************************
      * Status methods
       ***************************************************** */
 	boolean isConnected();
 
-	IMonitorDataGeneral getMonitorData() throws ZoneMinderInvalidData;
-	ZoneMinderMonitorStatusEnum getMonitorDetailedStatus();
+	IMonitorDataGeneral getMonitorData() throws ZoneMinderInvalidData, ZoneMinderAuthenticationException, ZoneMinderGeneralException, ZoneMinderResponseException;
+	ZoneMinderMonitorStatus getMonitorDetailedStatus() throws ZoneMinderInvalidData, ZoneMinderGeneralException, ZoneMinderResponseException, ZoneMinderAuthenticationException;
 
     IZoneMinderDaemonStatus getCaptureDaemonStatus() throws ZoneMinderGeneralException, ZoneMinderResponseException, ZoneMinderInvalidData, ZoneMinderAuthenticationException;
     IZoneMinderDaemonStatus getAnalysisDaemonStatus() throws ZoneMinderGeneralException, ZoneMinderResponseException, ZoneMinderInvalidData, ZoneMinderAuthenticationException;
@@ -76,10 +77,7 @@ public interface IZoneMinderMonitor /*extends IZoneMinderResponse*/ {
      * @throws ZoneMinderUrlNotFoundException 
      * @throws FailedLoginException 
       ***************************************************** */
-//	void activateForceAlarm(Integer priority, String reason, String note, String showText, Integer timeoutSeconds) throws IOException, FailedLoginException, ZoneMinderUrlNotFoundException;
-//	void deactivateForceAlarm() throws Exception;
 
-    ZoneMinderContentResponse SetEnabled(boolean enabled) throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderResponseException, ZoneMinderException;
 	
 
 	/** *****************************************************
@@ -89,6 +87,7 @@ public interface IZoneMinderMonitor /*extends IZoneMinderResponse*/ {
 	 * @throws ZoneMinderGeneralException 
 	 * @throws ZoneMinderAuthenticationException 
       ***************************************************** */
+    ZoneMinderContentResponse SetEnabled(boolean enabled) throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderResponseException, ZoneMinderException;
 	ZoneMinderContentResponse SetFunction(String function) throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderResponseException, ZoneMinderException;
 	ZoneMinderContentResponse SetFunction(ZoneMinderMonitorFunctionEnum function) throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderResponseException, ZoneMinderException;
 	

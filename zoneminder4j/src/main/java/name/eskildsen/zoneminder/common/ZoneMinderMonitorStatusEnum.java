@@ -23,7 +23,23 @@ public enum ZoneMinderMonitorStatusEnum {
             return name;
     }
 
-    public static ZoneMinderMonitorStatusEnum getEnum(String value) {
+    public static ZoneMinderMonitorStatusEnum getEnumFromName(String value) {
+        if (value.equalsIgnoreCase("Idle")) {
+            return IDLE;
+        } else if (value.equals("Pre-Alarm")) {
+            return PRE_ALARM;
+        } else if (value.equals("Alarm")) {
+            return ALARM;
+        } else if (value.equals("Alert")) {
+            return ALERT;
+        } else if (value.equals("Recording")) {
+            return RECORDING;
+        }
+        return UNKNOWN;
+
+    }
+
+    public static ZoneMinderMonitorStatusEnum getEnumFromCode(String value) {
 
         if (value.equalsIgnoreCase("0")) {
             return IDLE;

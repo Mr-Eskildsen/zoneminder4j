@@ -186,7 +186,8 @@ public class ZoneMinderServerProxy  extends ZoneMinderGenericProxy implements IZ
 			if (daemonStatus!=null) {
 				return daemonStatus.getStatus();
 			}
-		} catch(Exception ex) {
+		} catch (ZoneMinderGeneralException | ZoneMinderResponseException | ZoneMinderInvalidData
+				| ZoneMinderAuthenticationException e) {
 			//Intentionally left blank
 		}
 		return false;

@@ -28,8 +28,8 @@ public interface IZoneMinderConnectionInfo {
 	public String getUserName();
 	public String getPassword();
 
-	@Deprecated
-	public URI getZoneMinderRootUri_() throws MalformedURLException;
+	//@Deprecated
+	//public URI getZoneMinderRootUri_() throws MalformedURLException;
 	public URI getZoneMinderPortalUri() throws MalformedURLException;
 
 	public Integer getTimeout();
@@ -39,11 +39,11 @@ public interface IZoneMinderConnectionInfo {
 	public URI buildZoneMinderApiUri(String subPath) throws MalformedURLException;
 
 
-	@Deprecated
-	String getConfigAuthenticationHashSecret();
+	//@Deprecated
+	//String getConfigAuthenticationHashSecret();
 	
-	@Deprecated
-	boolean isAuthenticationHashAllowed();
+	//@Deprecated
+	//boolean isAuthenticationHashAllowed();
 	
 	boolean isAuthenticationEnabled();
 	boolean isApiEnabled();
@@ -56,25 +56,26 @@ public interface IZoneMinderConnectionInfo {
 	String getPageContentAsString(URI url, List<JettyQueryParameter> parameters) throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderResponseException;
 	
 	//TODO String to URI
-	@Deprecated
-	String getPageContentAsString(String url)
-			throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderResponseException, IllegalArgumentException, UriBuilderException;
+	//@Deprecated
+	//String getPageContentAsString(String url)
+	//		throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderResponseException, IllegalArgumentException, UriBuilderException;
+
 
 	//TODO String to URI
-	@Deprecated
-	String getPageContentAsString(String url, List<JettyQueryParameter> parameters) throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderResponseException, IllegalArgumentException, UriBuilderException;
+	//@Deprecated
+	//String getPageContentAsString(String url, List<JettyQueryParameter> parameters) throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderResponseException, IllegalArgumentException, UriBuilderException;
 	
 	//TODO String to URI
-	@Deprecated
-	ByteArrayOutputStream getPageContentAsByteArray(String url, List<JettyQueryParameter> parameters) throws ZoneMinderAuthenticationException, ZoneMinderStreamConfigException, ZoneMinderGeneralException; 
+	//@Deprecated
+	//ByteArrayOutputStream getPageContentAsByteArray(String url, List<JettyQueryParameter> parameters) throws ZoneMinderAuthenticationException, ZoneMinderStreamConfigException, ZoneMinderGeneralException; 
 	
 	//TODO String to URI
-	@Deprecated
-	void sendPost(String url, Map<String, String> postParams) throws ZoneMinderAuthenticationException;
+	//@Deprecated
+	//void sendPost(String url, Map<String, String> postParams) throws ZoneMinderAuthenticationException;
 	
 	//TODO String to URI
-	@Deprecated
-	void sendPost(String url, List<JettyQueryParameter> parameters) throws ZoneMinderAuthenticationException;
+	//@Deprecated
+	//void sendPost(String url, List<JettyQueryParameter> parameters) throws ZoneMinderAuthenticationException;
 	
 	
 	

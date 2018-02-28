@@ -34,7 +34,7 @@ import name.eskildsen.zoneminder.exception.ZoneMinderResponseException;
 import name.eskildsen.zoneminder.exception.ZoneMinderUrlNotFoundException;
 
 
-public interface IZoneMinderServer /*extends IZoneMinderResponse*/ {
+public interface IZoneMinderServer {
 
 
 
@@ -93,7 +93,5 @@ public interface IZoneMinderServer /*extends IZoneMinderResponse*/ {
 	 ***************************************************** */    
 	ZoneMinderConfig getConfig(ZoneMinderConfigEnum configId) throws ZoneMinderGeneralException, ZoneMinderResponseException, ZoneMinderAuthenticationException, MalformedURLException, ZoneMinderInvalidData;
 
-	//boolean setConfig(ZoneMinderConfigEnum configId, Boolean newValue) throws ZoneMinderGeneralException, ZoneMinderResponseException;
-	//boolean setConfig(ZoneMinderConfigEnum configId, String value) throws ZoneMinderGeneralException, ZoneMinderResponseException;
 
 }

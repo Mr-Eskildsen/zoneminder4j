@@ -20,7 +20,7 @@ public interface IZoneMinderCoreSession {
 	boolean isAuthenticationEnabled();
 	
 	
-	@Deprecated
-	boolean isApiEnabled() throws FailedLoginException, IllegalArgumentException, IOException, ZoneMinderUrlNotFoundException;
+	//@Deprecated
+	//boolean isApiEnabled() throws FailedLoginException, IllegalArgumentException, IOException, ZoneMinderUrlNotFoundException;
 
 }

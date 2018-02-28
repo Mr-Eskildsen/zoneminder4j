@@ -21,6 +21,7 @@ import name.eskildsen.zoneminder.exception.ZoneMinderApiNotEnabledException;
 import name.eskildsen.zoneminder.exception.ZoneMinderAuthHashNotEnabled;
 import name.eskildsen.zoneminder.exception.ZoneMinderAuthenticationException;
 import name.eskildsen.zoneminder.exception.ZoneMinderGeneralException;
+import name.eskildsen.zoneminder.exception.ZoneMinderInvalidData;
 import name.eskildsen.zoneminder.exception.ZoneMinderResponseException;
 import name.eskildsen.zoneminder.general.ProtocolType;
 import name.eskildsen.zoneminder.general.Tools;
@@ -136,13 +137,13 @@ public abstract class GenericConnectionHandler extends HttpCore implements IZone
 	}
 	
 	
-	public boolean connect() throws ZoneMinderApiNotEnabledException, ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException {
+	public boolean connect() throws ZoneMinderApiNotEnabledException, ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderInvalidData, ZoneMinderResponseException {
 		onConnect();
 		return isConnected();
 	}
 
 	
-	protected abstract void onConnect() throws ZoneMinderApiNotEnabledException, ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException;
+	protected abstract void onConnect() throws ZoneMinderApiNotEnabledException, ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderInvalidData, ZoneMinderResponseException;
 	protected abstract void onDisconnect() throws Throwable;
 	
 	protected void Initialize(String protocol, String hostName, Integer portHttp, Integer portTelnet, String userName,

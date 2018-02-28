@@ -14,9 +14,8 @@ import name.eskildsen.zoneminder.jetty.JettyQueryParameter;
 //IS Referenced
 
 @Deprecated
-public interface IZoneMinderHttpSession extends IZoneMinderCoreSession {
+public interface IZoneMinderHttpSession_NA extends IZoneMinderCoreSession {
 
-	//boolean isTriggerOptionEnabled();
 	
 
 	boolean isAuthenticated();

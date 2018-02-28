@@ -132,8 +132,7 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 				try {
 					Thread.sleep(100);
 				} catch (InterruptedException e) {
-					// TODO handle this
-					e.printStackTrace();
+					//Intentionally left blanl - only occurrs when closing down
 				}
 			}
 			
@@ -181,8 +180,7 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 			} catch(ZoneMinderResponseException| ZoneMinderGeneralException zmre) {
 				throw zmre;
 			} catch(Exception ex ) {
-				//TODO HAndle this error
-				ex.printStackTrace();
+				throw ex;
 			}
 			finally {
 				//TODO Lousy, should be fixed in general!
@@ -197,7 +195,7 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 	}
 	
 	@Override
-	protected void onConnect() throws ZoneMinderGeneralException, ZoneMinderApiNotEnabledException, ZoneMinderAuthenticationException, MalformedURLException {
+	protected void onConnect() throws ZoneMinderInvalidData, ZoneMinderResponseException, ZoneMinderGeneralException, ZoneMinderApiNotEnabledException, ZoneMinderAuthenticationException, MalformedURLException {
 		
 		try {
 			if (getProtocolType() == ProtocolType.HTTPS) {
@@ -283,7 +281,6 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 		//JsonObject json = null;
 		JsonResponse jsonResponse = null;
 			
-		try {
 			
 			/**
 			 * ZoneMinder Streaming Path
@@ -330,15 +327,6 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 					buildURI(getApiUri(),resolvePlaceholder(ZoneMinderServerConstants.SUBPATH_API_SERVER_GET_CONFIG_JSON, "ConfigId", ZoneMinderConfigEnum.ZM_AUTH_HASH_IPS.name())), HttpMethod.GET, null );
 			cfgAuthHashUseIps = IZoneMinderResponse.createFromJson(jsonResponse.getJsonObject().getAsJsonObject("config").getAsJsonObject("Config"), jsonResponse.getHttpStatus(), jsonResponse.getHttpMessage(), jsonResponse.getRequestURI(), ZoneMinderConfigImpl.class);
 			setAuthenticationHashUseIp(cfgAuthHashUseIps.getvalueAsBoolean());
-			
-
-		} catch (ZoneMinderResponseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ZoneMinderInvalidData e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 				
 	}		
 	
@@ -534,20 +522,18 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 		return getPageContentAsString(UriBuilder.fromPath(url).build(), parameters);
 	}
 */
-	@Deprecated
-	public ByteArrayOutputStream getPageContentAsByteArray(URI uri, List<JettyQueryParameter> parameters) throws ZoneMinderAuthenticationException, ZoneMinderStreamConfigException, ZoneMinderGeneralException {
+/*	@Deprecated
+	private ByteArrayOutputStream getPageContentAsByteArray(URI uri, List<JettyQueryParameter> parameters) throws ZoneMinderAuthenticationException, ZoneMinderStreamConfigException, ZoneMinderGeneralException {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		ContentResponse response =  null;
-		//TODO Fix
-		//lastUrl = url;
+
 		ZoneMinderContentResponse contentResponse = null;
 	
 		try {
 			contentResponse = fetchContentResponse(uri, HttpMethod.GET, parameters);
 			
 		} catch ( IllegalArgumentException | UriBuilderException e) {
-			// TODO::Better handlings 
-			e.printStackTrace();
+			throw e;
 		
 		} catch (ZoneMinderResponseException zmre) {
 			String message = "Unspecified error occurred when fetching image (Status='" + zmre.getHttpStatus() + "')";
@@ -555,8 +541,7 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 			throw new ZoneMinderGeneralException(message, null);			
 	
 		} catch (ZoneMinderGeneralException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw e;
 		}
 		if (contentResponse.getHttpStatus()==HttpStatus.OK_200) {
 			InputStream inputStream = contentResponse.getContentAsInputStream();
@@ -568,8 +553,7 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 					baos.write(byteChunk, 0, n);
 				}
 			} catch (IOException e) {
-				// TODO - Handle this exception
-				e.printStackTrace();
+				throw e;
 			}
 
 		
@@ -582,7 +566,7 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 		return baos;
 
 	}
-
+*/
 	private Request createRequest(URI uri)
 	{
 		return jettyHttpClient.newRequest(uri);

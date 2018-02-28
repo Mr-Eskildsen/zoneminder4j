@@ -20,10 +20,11 @@ import com.google.gson.JsonObject;
 import name.eskildsen.zoneminder.IZoneMinderMonitor;
 import name.eskildsen.zoneminder.IZoneMinderResponse;
 import name.eskildsen.zoneminder.IZoneMinderConnectionHandler;
-import name.eskildsen.zoneminder.IZoneMinderHttpSession;
+import name.eskildsen.zoneminder.IZoneMinderHttpSession_NA;
 import name.eskildsen.zoneminder.api.event.ZoneMinderEvent;
 import name.eskildsen.zoneminder.api.monitor.ZoneMinderMonitorData;
 import name.eskildsen.zoneminder.api.monitor.ZoneMinderMonitorImage;
+import name.eskildsen.zoneminder.api.monitor.ZoneMinderMonitorStatus;
 import name.eskildsen.zoneminder.data.IMonitorDataGeneral;
 import name.eskildsen.zoneminder.data.IMonitorDataStillImage;
 import name.eskildsen.zoneminder.data.IZoneMinderDaemonStatus;
@@ -39,16 +40,16 @@ import name.eskildsen.zoneminder.exception.ZoneMinderResponseException;
 import name.eskildsen.zoneminder.exception.ZoneMinderStreamConfigException;
 import name.eskildsen.zoneminder.exception.ZoneMinderUrlNotFoundException;
 import name.eskildsen.zoneminder.jetty.JettyQueryParameter;
-import name.eskildsen.zoneminder.api.monitor.ZoneMinderMonitorStatus;
+import name.eskildsen.zoneminder.api.monitor.ZoneMinderMonitorStatusImpl;
 import name.eskildsen.zoneminder.common.ZoneMinderMonitorFunctionEnum;
 import name.eskildsen.zoneminder.common.ZoneMinderMonitorStatusEnum;
 import name.eskildsen.zoneminder.common.ZoneMinderServerConstants;
 
 
-public class ZoneMinderMonitorProxy extends ZoneMinderGenericProxy implements IZoneMinderMonitor {
+public class ZoneMinderMonitorProxyImpl extends ZoneMinderGenericProxy implements IZoneMinderMonitor {
 
 
-	public ZoneMinderMonitorProxy(IZoneMinderConnectionHandler connection, String monitorId)
+	public ZoneMinderMonitorProxyImpl(IZoneMinderConnectionHandler connection, String monitorId)
 	{
 		super(connection);
 		setId( monitorId );
@@ -71,7 +72,6 @@ public class ZoneMinderMonitorProxy extends ZoneMinderGenericProxy implements IZ
     
     private  <T> IZoneMinderDaemonStatus getMonitorStatus(String daemonName, Class<T> classType) throws ZoneMinderGeneralException, ZoneMinderResponseException, ZoneMinderInvalidData, ZoneMinderAuthenticationException {
 
-        JsonObject jsonObject = null;
         ZoneMinderContentResponse response = null;
         try {
         	//TODO HArdcoded values
@@ -129,35 +129,6 @@ public class ZoneMinderMonitorProxy extends ZoneMinderGenericProxy implements IZ
     	return list;
     }
 
-    /*
-    protected List<JettyQueryParameter> getMonitorStreamingParameterList(){
-    	List<JettyQueryParameter> list = new ArrayList<JettyQueryParameter>();
-
-		//TODO Fix hardcoded
-		list.add(new JettyQueryParameter("monitor", getId()));
-		list.add(new JettyQueryParameter("scale", "100"));
-		list.add(new JettyQueryParameter("buffer", "1000"));
-		
-
-		String paramAuth = "";
-		if (getConnection().isAuthenticationHashAllowed()==true)
-		{
-			list.add(new JettyQueryParameter("user", getConnection().getUserName()));
-			try {
-				list.add(new JettyQueryParameter("auth", getConnection().getAuthHashToken()));
-			} catch (ZoneMinderAuthHashNotEnabled e) {
-				//Should never appear since we have tested up front
-			}
-		}
-		else if (getConnection().isAuthenticationEnabled())
-		{
-			list.add(new JettyQueryParameter("user", getConnection().getUserName()));
-			list.add(new JettyQueryParameter("pass", getConnection().getPassword()));
-		}
-		return list; 
-		
-    }
-    */
     
 	protected URI getMonitorStreamingURI() throws MalformedURLException, ZoneMinderGeneralException, ZoneMinderResponseException {
 		return buildUriZmsNph("");
@@ -174,8 +145,6 @@ public class ZoneMinderMonitorProxy extends ZoneMinderGenericProxy implements IZ
 
 		UriBuilder uriBuilderStreaming = UriBuilder.fromUri(getMonitorStreamingURI());
 		
-		//String query = "";
-		//String prefix = "";
 		for (int idx=0;idx<parameters.size();idx++) {
 			JettyQueryParameter param = parameters.get(idx);
 			uriBuilderStreaming.queryParam(param.getName(), param.getValue());
@@ -307,52 +276,6 @@ public class ZoneMinderMonitorProxy extends ZoneMinderGenericProxy implements IZ
         return null;
     }
 
-    /*
-    private  IZoneMinderEventData getEventById_OLD(String eventId) throws ZoneMinderGeneralException, ZoneMinderResponseException, ZoneMinderInvalidData {
-
-        JsonObject jsonObject = null;
-
-        try {
-            Integer maxPages = 1;
-            for (Integer curPageIdx = 1; curPageIdx <= maxPages; curPageIdx++) {
-
-                jsonObject = getAsJson(
-                        resolveCommands(ZoneMinderServerConstants.SUBPATH_API_EVENTS_SPECIFIC_MONITOR_JSON, "MonitorId", getId()),
-                        //TODO QUite qugly
-                        createQueryParameterListFromString(resolveCommands(QUERY_CURRENTPAGE, "currentPage", curPageIdx.toString())));
-
-                if (jsonObject == null) {
-                    return null;
-                }
-
-                JsonElement elemPageCount = jsonObject.getAsJsonObject("pagination").get("pageCount");
-                
-                if (curPageIdx == 1) {
-                    maxPages = elemPageCount.getAsInt();
-                }
-                
-                JsonArray jsonEvents = jsonObject.getAsJsonArray("events");
-                
-                for (JsonElement curJsonEvent : jsonEvents) {
-                	//ZoneMinderEvent curEvent = (ZoneMinderEvent) convertToClass(((JsonObject)curJsonEvent).getAsJsonObject("Event"), ZoneMinderEvent.class);
-                	ZoneMinderEvent curEvent = ZoneMinderCoreData.createFromJson(((JsonObject)curJsonEvent).getAsJsonObject("Event"), ZoneMinderEvent.class);
-                			
-                	if (curEvent != null) {
-                	
-                        // Return last event
-               	 		if (curEvent.getId().equals(eventId))
-               	 			return (IZoneMinderEventData)curEvent;
-                	}
-                }
-            }
-	     } catch (ArrayIndexOutOfBoundsException | IOException |  ZoneMinderUrlNotFoundException e) {
-	    	 return null;
-	     }
-
-        return null;
-    }
-
-    */
     public  IZoneMinderEventData getEventById(String eventId) {
 
         JsonObject jsonObject = null;
@@ -416,44 +339,23 @@ public class ZoneMinderMonitorProxy extends ZoneMinderGenericProxy implements IZ
      * @throws FailedLoginException 
      * 
       ***************************************************** */
-	/*public void activateForceAlarm(Integer priority, String reason,
-            String note, String showText, Integer timeoutSeconds) throws IOException, FailedLoginException, ZoneMinderUrlNotFoundException
-	{
-		IZoneMinderHttpSessionInternal session = aquireSession();
-	
-		ZoneMinderTelnetRequest request = new ZoneMinderTelnetRequest(TelnetAction.ON, getId(), priority, reason,
-	            note, showText, timeoutSeconds);
-		session.writeTelnet(request.toCommandString());
-		
-		releaseSession(session);
-		
-	}
-
-	public void deactivateForceAlarm() throws Exception
-	{
-
-		IZoneMinderHttpSessionInternal session = aquireSession();
-
-		ZoneMinderTelnetRequest request = new ZoneMinderTelnetRequest(TelnetAction.OFF, getId(), 255, "",
-	            "", "", 0);
-		session.writeTelnet(request.toCommandString());
-		releaseSession(session);
-	}
-*/
 
     /** *****************************************************
      * 
      * Monitor
+     * @throws ZoneMinderResponseException 
+     * @throws ZoneMinderGeneralException 
+     * @throws ZoneMinderAuthenticationException 
      * @throws Exception 
      * 
       ***************************************************** */
-	public IMonitorDataGeneral getMonitorData() throws ZoneMinderInvalidData {
+	public IMonitorDataGeneral getMonitorData() throws ZoneMinderInvalidData, ZoneMinderAuthenticationException, ZoneMinderGeneralException, ZoneMinderResponseException {
 		    
 		ZoneMinderContentResponse response = null;
 		ZoneMinderMonitorData monitorData = null;
 		     try {
 		    	 
-		     	//TODO HArdcoded values
+		     	//TODO Hardcoded values
  	            String path = replaceParameter(ZoneMinderServerConstants.SUBPATH_API_MONITOR_SPECIFIC_JSON, "MonitorId", getId());
                 response = getConnection().getPageContent(buildUriApi(path), null);
 
@@ -466,11 +368,8 @@ public class ZoneMinderMonitorProxy extends ZoneMinderGenericProxy implements IZ
 
 		     } catch (IOException e) {
 		    	 //TODO HAndle Error
-		    	 //jsonObject = null;
+		    	 monitorData = null;
 		     
-	  		 } catch (Exception e) {
-		    	 //TODO HAndle Error
-	  			 //jsonObject = null;
 	  		 }
 		    
 		     return monitorData;
@@ -478,10 +377,10 @@ public class ZoneMinderMonitorProxy extends ZoneMinderGenericProxy implements IZ
 	     }
 	    
 	     
-	  public ZoneMinderMonitorStatusEnum getMonitorDetailedStatus() {
+	  public ZoneMinderMonitorStatus getMonitorDetailedStatus() throws ZoneMinderInvalidData, ZoneMinderAuthenticationException, ZoneMinderGeneralException, ZoneMinderResponseException {
 	    	 
              ZoneMinderContentResponse response = null;
-             ZoneMinderMonitorStatus status = null;
+             ZoneMinderMonitorStatusImpl status = null;
              try {
 
  	        	//TODO HArdcoded values
@@ -492,17 +391,15 @@ public class ZoneMinderMonitorProxy extends ZoneMinderGenericProxy implements IZ
 	            		 								response.getHttpStatus(), 
 	            		 								response.getHttpResponseMessage(), 
 	            		 								response.getHttpRequestURI(), 
-	            		 								ZoneMinderMonitorStatus.class);
+	            		 								ZoneMinderMonitorStatusImpl.class);
 	             if (status != null) {
-	                 return status.getStatus();
+	                 return status;
 	             }
 	             
              } catch (IOException e) {
             	 //Intentionally left blank
-             } catch (Exception e) {
-            	//Intentionally left blank
              }
-	         return ZoneMinderMonitorStatusEnum.UNKNOWN;
+             return new ZoneMinderMonitorStatusImpl(ZoneMinderMonitorStatusEnum.UNKNOWN, response);
 	     }
 	     
 	     
