@@ -62,24 +62,24 @@ public class ZoneMinderServerProxy  extends ZoneMinderGenericProxy implements IZ
 
 
 	@Override
-	public boolean isApiEnabled() {
+	public boolean isApiEnabled()  {
 		try {
 			ZoneMinderConfig config = getConfig(ZoneMinderConfigEnum.ZM_OPT_USE_API);
 			return (config.getValueAsString().equals("1") ? true : false);
 		}
-		catch(Exception ex) {
+		catch(Exception | ZoneMinderAuthenticationException | ZoneMinderGeneralException | ZoneMinderResponseException | ZoneMinderInvalidData ex) {
 			return false;
 		}
 	}
 
 
 	@Override
-	public boolean isTriggerOptionEnabled() {
+	public boolean isTriggerOptionEnabled()  {
 		try {
 			ZoneMinderConfig config = getConfig(ZoneMinderConfigEnum.ZM_OPT_TRIGGERS);
 			return (config.getValueAsString().equals("1") ? true : false);
 		}
-		catch(Exception ex) {
+		catch(Exception | ZoneMinderAuthenticationException | ZoneMinderGeneralException | ZoneMinderResponseException | ZoneMinderInvalidData ex) {
 
 		}
 		return true;

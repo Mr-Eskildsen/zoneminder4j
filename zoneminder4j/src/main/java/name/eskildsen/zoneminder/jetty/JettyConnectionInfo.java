@@ -624,8 +624,7 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 	
 	@Override
 	public ZoneMinderContentResponse sendPut(URI uri, Fields fields)
-			throws MalformedURLException,
-			ZoneMinderException {
+			throws MalformedURLException, ZoneMinderGeneralException, ZoneMinderResponseException {
 
 		ContentProvider contentProvider = new FormContentProvider(fields);
 		Request request = createRequest(uri)
@@ -753,7 +752,7 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 	
 
 	private ZoneMinderContentResponse execute(Request request)
-			throws MalformedURLException, ZoneMinderException
+			throws MalformedURLException, ZoneMinderGeneralException, ZoneMinderResponseException
 	{
 
 		ZoneMinderContentResponse responseHandler = new ZoneMinderContentResponse(); 
@@ -776,8 +775,7 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 			try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
-				// TODO handle this
-				e.printStackTrace();
+				//Intentionally left blank
 			}
 		}
 			

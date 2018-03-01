@@ -33,20 +33,22 @@ public class ZoneMinderResponseException extends ZoneMinderException {
 	}
 
 
-	//private Boolean success;
+	 @Override
+	 public String getMessage() {
+		return String.format("%s - HttpStatus='%i', HttpMessage='%s', Request='%s', ExceptionMessage='%s'", super.getMessage(), getHttpStatus(), getHttpMessage(), getHttpRequest(),getExceptionMessage()); 
+	}
+
 
 	private ExceptionData exceptionData;
 	
 	
 	
 	public Integer getHttpStatus() {
-		//return data.getExtendedInfo().getHttpStatus();
 		return response.getStatus();
 	}
 
 	public String getHttpMessage() {
 		return response.getReason();
-		//return data.getExtendedInfo().getMessage();
 	}
 	
 	public String getHttpRequest() {
@@ -58,22 +60,4 @@ public class ZoneMinderResponseException extends ZoneMinderException {
 		return exceptionData.getExtendedInfo().getMessage();
 	}
 	
-	
-/*
-	public Boolean getSuccess() {
-		return success;
-	}
-
-	public void setSuccess(Boolean success) {
-		this.success = success;
-	}
-
-	public ExceptionData getData() {
-		return data;
-	}
-
-	public void setData(ExceptionData data) {
-		this.data = data;
-	}
-*/
 }

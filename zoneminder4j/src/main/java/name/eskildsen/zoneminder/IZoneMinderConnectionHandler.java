@@ -62,7 +62,7 @@ public interface IZoneMinderConnectionHandler/*extends IZoneMinderConnectionInfo
 	ZoneMinderContentResponse getPageContent(URI url, List<JettyQueryParameter> parameters) throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderResponseException;
 
 	ZoneMinderContentResponse sendPost(URI url, List<JettyQueryParameter> parameters) throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderResponseException, ZoneMinderException;
-	ZoneMinderContentResponse sendPut(URI uri, Fields fields) throws MalformedURLException, ZoneMinderException;
+	ZoneMinderContentResponse sendPut(URI uri, Fields fields) throws MalformedURLException, ZoneMinderGeneralException, ZoneMinderResponseException;
 
 	
 

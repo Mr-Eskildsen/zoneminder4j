@@ -55,15 +55,19 @@ public interface IZoneMinderMonitor  {
     
     String getMonitorStreamingPath(Integer scale, Integer buffer, JettyQueryParameter[] extraParams) throws MalformedURLException, ZoneMinderGeneralException, ZoneMinderResponseException, ZoneMinderAuthHashNotEnabled;
     
-    IMonitorDataStillImage getMonitorStillImage() throws MalformedURLException, ZoneMinderStreamConfigException;
-    IMonitorDataStillImage getMonitorStillImage(Integer scale, JettyQueryParameter[] extraParams) throws MalformedURLException, ZoneMinderStreamConfigException;
-    IMonitorDataStillImage getMonitorStillImage(Integer scale, Integer buffer, JettyQueryParameter[] extraParams) throws MalformedURLException, ZoneMinderStreamConfigException;
+    IMonitorDataStillImage getMonitorStillImage() throws MalformedURLException, ZoneMinderStreamConfigException, ZoneMinderGeneralException, ZoneMinderResponseException, ZoneMinderAuthHashNotEnabled, ZoneMinderAuthenticationException;
+    IMonitorDataStillImage getMonitorStillImage(Integer scale, JettyQueryParameter[] extraParams) throws MalformedURLException, ZoneMinderStreamConfigException, ZoneMinderGeneralException, ZoneMinderResponseException, ZoneMinderAuthHashNotEnabled, ZoneMinderAuthenticationException;
+    IMonitorDataStillImage getMonitorStillImage(Integer scale, Integer buffer, JettyQueryParameter[] extraParams) throws MalformedURLException, ZoneMinderStreamConfigException, ZoneMinderGeneralException, ZoneMinderResponseException, ZoneMinderAuthHashNotEnabled, ZoneMinderAuthenticationException;
     
     /** *****************************************************
      * Event API
+     * @throws ZoneMinderInvalidData 
+     * @throws ZoneMinderResponseException 
+     * @throws ZoneMinderGeneralException 
+     * @throws ZoneMinderAuthenticationException 
       ***************************************************** */
-    IZoneMinderEventData getLastEvent();
-    IZoneMinderEventData getEventById(String eventId);
+    IZoneMinderEventData getLastEvent() throws ZoneMinderInvalidData, ZoneMinderAuthenticationException, ZoneMinderGeneralException, ZoneMinderResponseException;
+    IZoneMinderEventData getEventById(String eventId) throws ZoneMinderInvalidData, ZoneMinderAuthenticationException, ZoneMinderGeneralException, ZoneMinderResponseException;
     
     
     /** *****************************************************
@@ -87,8 +91,8 @@ public interface IZoneMinderMonitor  {
 	 * @throws ZoneMinderGeneralException 
 	 * @throws ZoneMinderAuthenticationException 
       ***************************************************** */
-    ZoneMinderContentResponse SetEnabled(boolean enabled) throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderResponseException, ZoneMinderException;
-	ZoneMinderContentResponse SetFunction(String function) throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderResponseException, ZoneMinderException;
-	ZoneMinderContentResponse SetFunction(ZoneMinderMonitorFunctionEnum function) throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderResponseException, ZoneMinderException;
+    ZoneMinderContentResponse SetEnabled(boolean enabled) throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderResponseException;
+	ZoneMinderContentResponse SetFunction(String function) throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderResponseException;
+	ZoneMinderContentResponse SetFunction(ZoneMinderMonitorFunctionEnum function) throws ZoneMinderAuthenticationException, ZoneMinderGeneralException, MalformedURLException, ZoneMinderResponseException;
 	
 }

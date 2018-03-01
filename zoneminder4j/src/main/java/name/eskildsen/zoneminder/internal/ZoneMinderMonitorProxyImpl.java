@@ -33,7 +33,6 @@ import name.eskildsen.zoneminder.data.ZoneMinderCoreData;
 import name.eskildsen.zoneminder.data.ZoneMinderMonitorDaemonStatus;
 import name.eskildsen.zoneminder.exception.ZoneMinderAuthHashNotEnabled;
 import name.eskildsen.zoneminder.exception.ZoneMinderAuthenticationException;
-import name.eskildsen.zoneminder.exception.ZoneMinderException;
 import name.eskildsen.zoneminder.exception.ZoneMinderGeneralException;
 import name.eskildsen.zoneminder.exception.ZoneMinderInvalidData;
 import name.eskildsen.zoneminder.exception.ZoneMinderResponseException;
@@ -160,22 +159,22 @@ public class ZoneMinderMonitorProxyImpl extends ZoneMinderGenericProxy implement
 
     
 	@Override
-	public IMonitorDataStillImage getMonitorStillImage() throws MalformedURLException, ZoneMinderStreamConfigException {
+	public IMonitorDataStillImage getMonitorStillImage() throws MalformedURLException, ZoneMinderStreamConfigException, ZoneMinderGeneralException, ZoneMinderResponseException, ZoneMinderAuthHashNotEnabled, ZoneMinderAuthenticationException {
 		return _getMonitorStillImage(null, null, null);
 	}
 	
 	@Override
-	public IMonitorDataStillImage getMonitorStillImage(Integer scale, JettyQueryParameter[] extraParams) throws MalformedURLException, ZoneMinderStreamConfigException {
+	public IMonitorDataStillImage getMonitorStillImage(Integer scale, JettyQueryParameter[] extraParams) throws MalformedURLException, ZoneMinderStreamConfigException, ZoneMinderGeneralException, ZoneMinderResponseException, ZoneMinderAuthHashNotEnabled, ZoneMinderAuthenticationException {
 		return _getMonitorStillImage(scale, null, extraParams);
 	}
 
 	@Override
-	public IMonitorDataStillImage getMonitorStillImage(Integer scale, Integer buffer, JettyQueryParameter[] extraParams) throws MalformedURLException, ZoneMinderStreamConfigException {
+	public IMonitorDataStillImage getMonitorStillImage(Integer scale, Integer buffer, JettyQueryParameter[] extraParams) throws MalformedURLException, ZoneMinderStreamConfigException, ZoneMinderGeneralException, ZoneMinderResponseException, ZoneMinderAuthHashNotEnabled, ZoneMinderAuthenticationException {
 		return _getMonitorStillImage(scale, buffer, extraParams);
 	}
 	
 	
-	public IMonitorDataStillImage _getMonitorStillImage(Integer scale, Integer buffer, JettyQueryParameter[] extraParams) throws MalformedURLException, ZoneMinderStreamConfigException 
+	public IMonitorDataStillImage _getMonitorStillImage(Integer scale, Integer buffer, JettyQueryParameter[] extraParams) throws MalformedURLException, ZoneMinderStreamConfigException, ZoneMinderGeneralException, ZoneMinderResponseException, ZoneMinderAuthHashNotEnabled, ZoneMinderAuthenticationException 
 	{
 		ZoneMinderMonitorImage imageData = null; 
 		ZoneMinderContentResponse zmcr = null;
@@ -220,9 +219,13 @@ public class ZoneMinderMonitorProxyImpl extends ZoneMinderGenericProxy implement
     /** *****************************************************
      * 
      * Event API
+     * @throws ZoneMinderInvalidData 
+     * @throws ZoneMinderResponseException 
+     * @throws ZoneMinderGeneralException 
+     * @throws ZoneMinderAuthenticationException 
      * 
       ***************************************************** */
-    public  IZoneMinderEventData getLastEvent() {
+    public  IZoneMinderEventData getLastEvent() throws ZoneMinderInvalidData, ZoneMinderAuthenticationException, ZoneMinderGeneralException, ZoneMinderResponseException {
 
         JsonObject jsonObject = null;
         ZoneMinderContentResponse response = null;
@@ -276,7 +279,7 @@ public class ZoneMinderMonitorProxyImpl extends ZoneMinderGenericProxy implement
         return null;
     }
 
-    public  IZoneMinderEventData getEventById(String eventId) {
+    public  IZoneMinderEventData getEventById(String eventId) throws ZoneMinderInvalidData, ZoneMinderAuthenticationException, ZoneMinderGeneralException, ZoneMinderResponseException {
 
         JsonObject jsonObject = null;
 
@@ -405,7 +408,7 @@ public class ZoneMinderMonitorProxyImpl extends ZoneMinderGenericProxy implement
 	     
 
 		@Override
-		public ZoneMinderContentResponse SetEnabled(boolean enabled) throws MalformedURLException, ZoneMinderException {
+		public ZoneMinderContentResponse SetEnabled(boolean enabled) throws MalformedURLException, ZoneMinderGeneralException, ZoneMinderResponseException {
 			//TODO HArdcoded	
 			String action = "";
 			 if (enabled) {
@@ -425,25 +428,26 @@ public class ZoneMinderMonitorProxyImpl extends ZoneMinderGenericProxy implement
      * 
      * Monitor
 	 * @throws MalformedURLException 
-	 * @throws ZoneMinderException 
+	 * @throws ZoneMinderResponseException 
+	 * @throws ZoneMinderGeneralException 
 	 * @throws Exception 
      * 
       ***************************************************** */
 	@Override
-	public ZoneMinderContentResponse SetFunction(String function) throws MalformedURLException, ZoneMinderException {
+	public ZoneMinderContentResponse SetFunction(String function) throws MalformedURLException, ZoneMinderGeneralException, ZoneMinderResponseException {
 			//TODO HArdcoded	
 		JettyQueryParameter property = new JettyQueryParameter("Monitor[Function]", function);
 		return setMonitorProperty(property );
 	}
 
-	public ZoneMinderContentResponse SetFunction(ZoneMinderMonitorFunctionEnum function) throws MalformedURLException, ZoneMinderException {
+	public ZoneMinderContentResponse SetFunction(ZoneMinderMonitorFunctionEnum function) throws MalformedURLException, ZoneMinderGeneralException, ZoneMinderResponseException {
 			//TODO HArdcoded	
 		JettyQueryParameter property = new JettyQueryParameter("Monitor[Function]", function.toString());
 		return setMonitorProperty(property );
 	
 	}
 
-	private ZoneMinderContentResponse setMonitorProperty(JettyQueryParameter setting) throws MalformedURLException, ZoneMinderException {
+	private ZoneMinderContentResponse setMonitorProperty(JettyQueryParameter setting) throws MalformedURLException, ZoneMinderGeneralException, ZoneMinderResponseException {
 		String methodPath = "";
 		String action = "";
 //		ArrayList<JettyQueryParameter> queryParam = new ArrayList<JettyQueryParameter>();
