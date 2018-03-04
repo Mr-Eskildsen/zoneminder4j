@@ -287,7 +287,9 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 			 */
 			jsonResponse = fetchDataAsJson( 
 					buildURI(getApiUri(),resolvePlaceholder(ZoneMinderServerConstants.SUBPATH_API_SERVER_GET_CONFIG_JSON, "ConfigId", ZoneMinderConfigEnum.ZM_PATH_ZMS.name())), HttpMethod.GET, null );
-			cfg = IZoneMinderResponse.createFromJson(jsonResponse.getJsonObject().getAsJsonObject("config").getAsJsonObject("Config"), jsonResponse.getHttpStatus(), jsonResponse.getHttpMessage(), jsonResponse.getRequestURI(), ZoneMinderConfigImpl.class);
+			
+			JsonObject objStreamingPath = jsonResponse.getJsonObject().getAsJsonObject("config").getAsJsonObject("Config");
+			cfg = IZoneMinderResponse.createFromJson(objStreamingPath, jsonResponse.getHttpStatus(), jsonResponse.getHttpMessage(), jsonResponse.getRequestURI(), null, ZoneMinderConfigImpl.class);
 			
 			setZoneMinderStreamingPath(cfg.getValueAsString());
 			
@@ -298,7 +300,8 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 								buildURI(getApiUri(),resolvePlaceholder(ZoneMinderServerConstants.SUBPATH_API_SERVER_GET_CONFIG_JSON, "ConfigId", ZoneMinderConfigEnum.ZM_OPT_TRIGGERS.name())), HttpMethod.GET, null );
 								
 			//TODO Fix hardcoded names
-			cfgOptTriggers = IZoneMinderResponse.createFromJson(jsonResponse.getJsonObject().getAsJsonObject("config").getAsJsonObject("Config"), jsonResponse.getHttpStatus(), jsonResponse.getHttpMessage(), jsonResponse.getRequestURI(), ZoneMinderConfigImpl.class);
+			JsonObject objOptTriggers = jsonResponse.getJsonObject().getAsJsonObject("config").getAsJsonObject("Config");
+			cfgOptTriggers = IZoneMinderResponse.createFromJson(objOptTriggers, jsonResponse.getHttpStatus(), jsonResponse.getHttpMessage(), jsonResponse.getRequestURI(), null, ZoneMinderConfigImpl.class);
 			 
 			
 			setTriggerOptionEnabled(cfgOptTriggers.getvalueAsBoolean());
@@ -308,24 +311,24 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
 			jsonResponse = fetchDataAsJson(
 								buildURI(getApiUri(),resolvePlaceholder(ZoneMinderServerConstants.SUBPATH_API_SERVER_GET_CONFIG_JSON, "ConfigId", ZoneMinderConfigEnum.ZM_AUTH_HASH_LOGINS.name())), HttpMethod.GET, null );
 			//TODO Fix hardcoded names
-			cfgAuthHashLogins = IZoneMinderResponse.createFromJson(jsonResponse.getJsonObject().getAsJsonObject("config").getAsJsonObject("Config"), jsonResponse.getHttpStatus(), jsonResponse.getHttpMessage(), jsonResponse.getRequestURI(), ZoneMinderConfigImpl.class);
+			cfgAuthHashLogins = IZoneMinderResponse.createFromJson(jsonResponse.getJsonObject().getAsJsonObject("config").getAsJsonObject("Config"), jsonResponse.getHttpStatus(), jsonResponse.getHttpMessage(), jsonResponse.getRequestURI(), null, ZoneMinderConfigImpl.class);
 			setAuthenticationHashAllowed(cfgAuthHashLogins.getvalueAsBoolean());
 			
 			jsonResponse = fetchDataAsJson( 
 								buildURI(getApiUri(),resolvePlaceholder(ZoneMinderServerConstants.SUBPATH_API_SERVER_GET_CONFIG_JSON, "ConfigId", ZoneMinderConfigEnum.ZM_AUTH_RELAY.name())), HttpMethod.GET, null );
-			cfgAuthHashRelay = IZoneMinderResponse.createFromJson(jsonResponse.getJsonObject().getAsJsonObject("config").getAsJsonObject("Config"), jsonResponse.getHttpStatus(), jsonResponse.getHttpMessage(), jsonResponse.getRequestURI(), ZoneMinderConfigImpl.class);
+			cfgAuthHashRelay = IZoneMinderResponse.createFromJson(jsonResponse.getJsonObject().getAsJsonObject("config").getAsJsonObject("Config"), jsonResponse.getHttpStatus(), jsonResponse.getHttpMessage(), jsonResponse.getRequestURI(), null,  ZoneMinderConfigImpl.class);
 			setAuthenticationHashReleayMethod(cfgAuthHashRelay.getValueAsString());
 			
 			
 			jsonResponse = fetchDataAsJson( 
 								buildURI(getApiUri(),resolvePlaceholder(ZoneMinderServerConstants.SUBPATH_API_SERVER_GET_CONFIG_JSON, "ConfigId", ZoneMinderConfigEnum.ZM_AUTH_HASH_SECRET.name())), HttpMethod.GET, null );
-			cfgAuthHashSecret = IZoneMinderResponse.createFromJson(jsonResponse.getJsonObject().getAsJsonObject("config").getAsJsonObject("Config"), jsonResponse.getHttpStatus(), jsonResponse.getHttpMessage(), jsonResponse.getRequestURI(), ZoneMinderConfigImpl.class);
+			cfgAuthHashSecret = IZoneMinderResponse.createFromJson(jsonResponse.getJsonObject().getAsJsonObject("config").getAsJsonObject("Config"), jsonResponse.getHttpStatus(), jsonResponse.getHttpMessage(), jsonResponse.getRequestURI(), null, ZoneMinderConfigImpl.class);
 			
 			setAuthenticationHashSecret(cfgAuthHashSecret.getValueAsString());
 			
 			jsonResponse = fetchDataAsJson( 
 					buildURI(getApiUri(),resolvePlaceholder(ZoneMinderServerConstants.SUBPATH_API_SERVER_GET_CONFIG_JSON, "ConfigId", ZoneMinderConfigEnum.ZM_AUTH_HASH_IPS.name())), HttpMethod.GET, null );
-			cfgAuthHashUseIps = IZoneMinderResponse.createFromJson(jsonResponse.getJsonObject().getAsJsonObject("config").getAsJsonObject("Config"), jsonResponse.getHttpStatus(), jsonResponse.getHttpMessage(), jsonResponse.getRequestURI(), ZoneMinderConfigImpl.class);
+			cfgAuthHashUseIps = IZoneMinderResponse.createFromJson(jsonResponse.getJsonObject().getAsJsonObject("config").getAsJsonObject("Config"), jsonResponse.getHttpStatus(), jsonResponse.getHttpMessage(), jsonResponse.getRequestURI(), null, ZoneMinderConfigImpl.class);
 			setAuthenticationHashUseIp(cfgAuthHashUseIps.getvalueAsBoolean());
 				
 	}		
@@ -339,23 +342,7 @@ public class JettyConnectionInfo extends GenericConnectionHandler implements IZo
         return input;
     }
 
-    /*
-     * 
-     * 
-     MOVED TO DATA CLASS!!!!!!!!!!!!
-	//TODO This is way to go??
-    //TODO Move to another class to allow same cponcept as httpclient
-	private <T extends ZoneMinderCoreData> T convertJsonToZoneMinderClass(JsonObject jsonObject, Class<T> typeData) {
-		T responseData = null;
-		 //TODO Handle exceptions from gGson?
-		Gson gson = new Gson();
-		responseData = gson.fromJson(jsonObject, typeData);
-		return responseData;
-			
-	}
-	
-	*/
-	
+ 	
 	private JsonResponse fetchDataAsJson(URI uri, HttpMethod httpMethod, List<JettyQueryParameter> parameters) throws ZoneMinderGeneralException, ZoneMinderResponseException, ZoneMinderInvalidData {
 
 		JsonObject jsonObject = null; 

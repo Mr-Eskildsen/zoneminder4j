@@ -139,7 +139,10 @@ public class ZoneMinderContentResponse extends BufferingResponseListener
 	
 	public JsonObject getContentAsJsonObject() {
 		JsonParser parser = new JsonParser();
-	
+		String content = getContentAsString();
+		if (content==null) {
+			return null;
+		}
 		JsonElement element = parser.parse(getContentAsString());
 		return element.getAsJsonObject();
 	}

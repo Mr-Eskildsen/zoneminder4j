@@ -78,7 +78,12 @@ public class ZoneMinderMonitorProxyImpl extends ZoneMinderGenericProxy implement
             path = replaceParameter(path, "DaemonName", daemonName);
             
             response = getConnection().getPageContent(buildUriApi( path ));
-            return IZoneMinderResponse.createFromJson(response.getContentAsJsonObject(), response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderMonitorDaemonStatus.class);
+            return IZoneMinderResponse.createFromJson(response.getContentAsJsonObject(), 
+            											response.getHttpStatus(), 
+            											response.getHttpResponseMessage(), 
+            											response.getHttpRequestURI(), 
+            											response,
+            											ZoneMinderMonitorDaemonStatus.class);
             
         } catch (IOException e) {
         	return null;
@@ -262,6 +267,7 @@ public class ZoneMinderMonitorProxyImpl extends ZoneMinderGenericProxy implement
                 											response.getHttpStatus(), 
                 											response.getHttpResponseMessage(), 
                 											response.getHttpRequestURI(), 
+                											response,
                 											ZoneMinderEvent.class);
                 	list.add(event);
                 }
@@ -316,6 +322,7 @@ public class ZoneMinderMonitorProxyImpl extends ZoneMinderGenericProxy implement
                 						response.getHttpStatus(), 
 										response.getHttpResponseMessage(), 
 										response.getHttpRequestURI(), 
+										response,
 										ZoneMinderEvent.class);
 
                 	if (curEvent != null) {
@@ -365,7 +372,8 @@ public class ZoneMinderMonitorProxyImpl extends ZoneMinderGenericProxy implement
                 monitorData = IZoneMinderResponse.createFromJson(response.getContentAsJsonObject().getAsJsonObject("monitor").getAsJsonObject("Monitor"), 
                 												response.getHttpStatus(), 
                 												response.getHttpResponseMessage(), 
-                												response.getHttpRequestURI(), 
+                												response.getHttpRequestURI(),
+                												response,
                 												ZoneMinderMonitorData.class);
 
 
@@ -393,7 +401,8 @@ public class ZoneMinderMonitorProxyImpl extends ZoneMinderGenericProxy implement
                 status = IZoneMinderResponse.createFromJson(response.getContentAsJsonObject(), 
 	            		 								response.getHttpStatus(), 
 	            		 								response.getHttpResponseMessage(), 
-	            		 								response.getHttpRequestURI(), 
+	            		 								response.getHttpRequestURI(),
+	            		 								response,
 	            		 								ZoneMinderMonitorStatusImpl.class);
 	             if (status != null) {
 	                 return status;

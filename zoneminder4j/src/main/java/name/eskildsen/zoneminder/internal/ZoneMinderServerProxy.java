@@ -90,7 +90,9 @@ public class ZoneMinderServerProxy  extends ZoneMinderGenericProxy implements IZ
 		ZoneMinderContentResponse response = null;
 		//TODO Hardcoded value
         response = getConnection().getPageContent(buildUriApi( replaceParameter(ZoneMinderServerConstants.SUBPATH_API_SERVER_GET_CONFIG_JSON, "ConfigId", configEnum.name())));
-        return (ZoneMinderConfig)IZoneMinderResponse.createFromJson(response.getContentAsJsonObject().getAsJsonObject("config").getAsJsonObject("Config"),response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderConfigImpl.class);
+        return (ZoneMinderConfig)IZoneMinderResponse.createFromJson(response.getContentAsJsonObject().getAsJsonObject("config").getAsJsonObject("Config"),response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), 
+        																response,
+        																ZoneMinderConfigImpl.class);
 
 	}
 
@@ -122,13 +124,21 @@ public class ZoneMinderServerProxy  extends ZoneMinderGenericProxy implements IZ
 		for (Map.Entry<String, JsonElement> entry : entries) {
 			if (entry.getKey().equalsIgnoreCase(id)) {
 				JsonObject object = (JsonObject) entry.getValue();
-				return IZoneMinderResponse.createFromJson(jsonObject, response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderDiskUsage.class);
+				return IZoneMinderResponse.createFromJson(jsonObject, 
+															response.getHttpStatus(), 
+															response.getHttpResponseMessage(), 
+															response.getHttpRequestURI(), 
+															response,
+															ZoneMinderDiskUsage.class);
 			}
 		}
 
 		//Just return response codes from call
-		return IZoneMinderResponse.createFromJson(null, response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderDiskUsage.class);
-		//return (IZoneMinderDiskUsage)convertToClass(null, ZoneMinderDiskUsage.class);
+		return IZoneMinderResponse.createFromJson(null, response.getHttpStatus(), 
+												response.getHttpResponseMessage(), response.getHttpRequestURI(), 
+												response,
+												ZoneMinderDiskUsage.class);
+
 
 	}
 	
@@ -156,7 +166,12 @@ public class ZoneMinderServerProxy  extends ZoneMinderGenericProxy implements IZ
 	{
 		ZoneMinderContentResponse response = null;
         response = getConnection().getPageContent(buildUriApi( ZoneMinderServerConstants.SUBPATH_API_HOST_VERSION_JSON));
-        return IZoneMinderResponse.createFromJson(response.getContentAsJsonObject(),response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderHostVersion.class);
+        return IZoneMinderResponse.createFromJson(response.getContentAsJsonObject(),
+        											response.getHttpStatus(), 
+        											response.getHttpResponseMessage(), 
+        											response.getHttpRequestURI(), 
+        											response,
+        											ZoneMinderHostVersion.class);
 	}
 
 
@@ -176,7 +191,7 @@ public class ZoneMinderServerProxy  extends ZoneMinderGenericProxy implements IZ
 	{
 		ZoneMinderContentResponse response = null;
         response = getConnection().getPageContent(buildUriApi( ZoneMinderServerConstants.SUBPATH_API_HOST_CPULOAD_JSON ));
-        return IZoneMinderResponse.createFromJson(response.getContentAsJsonObject(),response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderHostLoad.class);
+        return IZoneMinderResponse.createFromJson(response.getContentAsJsonObject(), response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), response, ZoneMinderHostLoad.class);
 	}
 
 	public  boolean isDaemonRunning()  { 
@@ -197,7 +212,12 @@ public class ZoneMinderServerProxy  extends ZoneMinderGenericProxy implements IZ
         ZoneMinderContentResponse response = null;
         try {
         	response = getConnection().getPageContent(buildUriApi( ZoneMinderServerConstants.SUBPATH_API_HOST_DAEMON_CHECKSTATE ));
-            return IZoneMinderResponse.createFromJson(response.getContentAsJsonObject(),response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderHostDaemonStatus.class);
+            return IZoneMinderResponse.createFromJson(response.getContentAsJsonObject(), 
+            											response.getHttpStatus(), 
+            											response.getHttpResponseMessage(), 
+            											response.getHttpRequestURI(), 
+            											response,
+            											ZoneMinderHostDaemonStatus.class);
             
         } catch (IOException e) {
         	return null;
@@ -228,7 +248,7 @@ public class ZoneMinderServerProxy  extends ZoneMinderGenericProxy implements IZ
         	JsonArray arrMonitorJson = response.getContentAsJsonObject().getAsJsonArray("monitors");	
         	for (JsonElement cur : arrMonitorJson) {
     			//TODO Fix Hardcoded Object Id
-    			ZoneMinderMonitorData monitorData = IZoneMinderResponse.createFromJson(((JsonObject)cur).getAsJsonObject("Monitor"), response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), ZoneMinderMonitorData.class);
+    			ZoneMinderMonitorData monitorData = IZoneMinderResponse.createFromJson(((JsonObject)cur).getAsJsonObject("Monitor"), response.getHttpStatus(), response.getHttpResponseMessage(), response.getHttpRequestURI(), response, ZoneMinderMonitorData.class);
     			arrMonitor.add(monitorData);
     		}
         } catch (IOException e) {

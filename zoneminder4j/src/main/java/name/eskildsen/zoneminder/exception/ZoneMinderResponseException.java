@@ -35,7 +35,7 @@ public class ZoneMinderResponseException extends ZoneMinderException {
 
 	 @Override
 	 public String getMessage() {
-		return String.format("%s - HttpStatus='%i', HttpMessage='%s', Request='%s', ExceptionMessage='%s'", super.getMessage(), getHttpStatus(), getHttpMessage(), getHttpRequest(),getExceptionMessage()); 
+		return String.format("%s - HttpStatus='%d', HttpMessage='%s', Request='%s', ExceptionMessage='%s'", super.getMessage(), getHttpStatus(), getHttpMessage(), getHttpRequest(),getExceptionMessage()); 
 	}
 
 
